@@ -27,26 +27,37 @@ public class CompetitionManageService {
      */
     public Map<String, Object> getStatistics() {
         Map<String, Object> statistics = new HashMap<>();
-        int totalCount = competitionManageMapper.countCompetitions(null);
+        int totalCount = competitionManageMapper.countCompetitions(null, null);
+        int levelACount = competitionManageMapper.countByAwardRank("A");
+        int levelBCount = competitionManageMapper.countByAwardRank("B");
+        int levelCCount = competitionManageMapper.countByAwardRank("C");
+        int levelDCount = competitionManageMapper.countByAwardRank("D");
+
         statistics.put("totalCount", totalCount);
+        statistics.put("levelACount", levelACount);
+        statistics.put("levelBCount", levelBCount);
+        statistics.put("levelCCount", levelCCount);
+        statistics.put("levelDCount", levelDCount);
         return statistics;
     }
 
     /**
      * 分页查询竞赛列表
      */
-    public Map<String, Object> getCompetitionList(String competitionName, Integer page, Integer pageSize) {
+    public Map<String, Object> getCompetitionList(String competitionName, String awardRank, Integer page,
+            Integer pageSize) {
         int offset = (page - 1) * pageSize;
-        
-        List<Competition> list = competitionManageMapper.selectCompetitionList(competitionName, offset, pageSize);
-        int total = competitionManageMapper.countCompetitions(competitionName);
-        
+
+        List<Competition> list = competitionManageMapper.selectCompetitionList(competitionName, awardRank, offset,
+                pageSize);
+        int total = competitionManageMapper.countCompetitions(competitionName, awardRank);
+
         Map<String, Object> result = new HashMap<>();
         result.put("list", list);
         result.put("total", total);
         result.put("page", page);
         result.put("pageSize", pageSize);
-        
+
         return result;
     }
 
@@ -67,7 +78,7 @@ public class CompetitionManageService {
         if (competition.getAwardRank() == null || competition.getAwardRank().trim().isEmpty()) {
             throw new Exception("获奖等次不能为空");
         }
-        
+
         competitionManageMapper.insertCompetition(competition);
     }
 
@@ -84,7 +95,7 @@ public class CompetitionManageService {
         if (competition.getAwardRank() == null || competition.getAwardRank().trim().isEmpty()) {
             throw new Exception("获奖等次不能为空");
         }
-        
+
         competitionManageMapper.updateCompetition(competition);
     }
 
@@ -95,7 +106,7 @@ public class CompetitionManageService {
         if (competitionId == null) {
             throw new Exception("竞赛ID不能为空");
         }
-        
+
         competitionManageMapper.deleteCompetition(competitionId);
     }
 
@@ -106,7 +117,7 @@ public class CompetitionManageService {
         if (ids == null || ids.isEmpty()) {
             throw new Exception("请选择要删除的竞赛");
         }
-        
+
         competitionManageMapper.batchDeleteCompetitions(ids);
     }
 
@@ -115,24 +126,24 @@ public class CompetitionManageService {
      */
     public byte[] exportCompetitions(String competitionName) throws IOException {
         List<Competition> competitions = competitionManageMapper.selectAllCompetitions(competitionName);
-        
+
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("竞赛列表");
-        
+
         // 创建表头
         Row headerRow = sheet.createRow(0);
         CellStyle headerStyle = workbook.createCellStyle();
         Font headerFont = workbook.createFont();
         headerFont.setBold(true);
         headerStyle.setFont(headerFont);
-        
-        String[] headers = {"序号", "竞赛名称", "获奖等次"};
+
+        String[] headers = { "序号", "竞赛名称", "获奖等次" };
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers[i]);
             cell.setCellStyle(headerStyle);
         }
-        
+
         // 填充数据
         int rowNum = 1;
         for (Competition competition : competitions) {
@@ -142,16 +153,16 @@ public class CompetitionManageService {
             row.createCell(2).setCellValue(competition.getAwardRank());
             rowNum++;
         }
-        
+
         // 自动调整列宽
         for (int i = 0; i < headers.length; i++) {
             sheet.autoSizeColumn(i);
         }
-        
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         workbook.write(outputStream);
         workbook.close();
-        
+
         return outputStream.toByteArray();
     }
 
@@ -162,56 +173,57 @@ public class CompetitionManageService {
         if (file.isEmpty()) {
             throw new Exception("上传文件不能为空");
         }
-        
+
         List<Competition> successList = new ArrayList<>();
         List<String> errorList = new ArrayList<>();
-        
+
         try (InputStream inputStream = file.getInputStream();
-             Workbook workbook = new XSSFWorkbook(inputStream)) {
-            
+                Workbook workbook = new XSSFWorkbook(inputStream)) {
+
             Sheet sheet = workbook.getSheetAt(0);
             int rowCount = sheet.getPhysicalNumberOfRows();
-            
+
             for (int i = 1; i < rowCount; i++) {
                 Row row = sheet.getRow(i);
-                if (row == null) continue;
-                
+                if (row == null)
+                    continue;
+
                 try {
                     // 第0列是序号，从第1列开始读取数据
                     Cell nameCell = row.getCell(1);
                     Cell rankCell = row.getCell(2);
-                    
+
                     if (nameCell == null || rankCell == null) {
                         errorList.add("第" + (i + 1) + "行：数据不完整");
                         continue;
                     }
-                    
+
                     String competitionName = getCellValueAsString(nameCell);
                     String awardRank = getCellValueAsString(rankCell);
-                    
+
                     if (competitionName.trim().isEmpty() || awardRank.trim().isEmpty()) {
                         errorList.add("第" + (i + 1) + "行：竞赛名称或获奖等次为空");
                         continue;
                     }
-                    
+
                     Competition competition = new Competition();
                     competition.setCompetitionName(competitionName);
                     competition.setAwardRank(awardRank);
-                    
+
                     competitionManageMapper.insertCompetition(competition);
                     successList.add(competition);
-                    
+
                 } catch (Exception e) {
                     errorList.add("第" + (i + 1) + "行：" + e.getMessage());
                 }
             }
         }
-        
+
         Map<String, Object> result = new HashMap<>();
         result.put("successCount", successList.size());
         result.put("errorCount", errorList.size());
         result.put("errors", errorList);
-        
+
         return result;
     }
 
@@ -219,8 +231,9 @@ public class CompetitionManageService {
      * 获取单元格值为字符串
      */
     private String getCellValueAsString(Cell cell) {
-        if (cell == null) return "";
-        
+        if (cell == null)
+            return "";
+
         switch (cell.getCellType()) {
             case STRING:
                 return cell.getStringCellValue();

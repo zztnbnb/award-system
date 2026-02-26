@@ -1,13 +1,5 @@
 <template>
   <div class="student-award-page login-wrapper-style">
-    <!-- 动态背景层 (从登录页引入) -->
-    <div class="background-layer">
-      <div class="bg-pattern"></div>
-      <div class="color-blob blob-1"></div>
-      <div class="color-blob blob-2"></div>
-      <div class="color-blob blob-3"></div>
-    </div>
-
     <NavBar />
     
     <div class="content-container">
@@ -1320,77 +1312,8 @@ const handleReset = () => {
 <style scoped>
 .student-award-page {
   min-height: 100vh;
-  background-color: #f8fafc; /* 极浅灰底色，同登录页 */
   position: relative;
-  /* 移除 overflow 避免产生双滚动条 */
-}
-
-/* --- 背景动效与纹理 (从登录页引入) --- */
-.background-layer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.bg-pattern {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-  background-size: 32px 32px;
-  opacity: 0.4;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.color-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.6;
-  animation: float 10s infinite ease-in-out alternate;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.blob-1 {
-  width: 400px;
-  height: 400px;
-  background: #bae6fd;
-  top: -10%;
-  left: -5%;
-  animation-delay: 0s;
-}
-
-.blob-2 {
-  width: 500px;
-  height: 500px;
-  background: #ddd6fe;
-  bottom: -20%;
-  right: -10%;
-  animation-delay: -2s;
-}
-
-.blob-3 {
-  width: 300px;
-  height: 300px;
-  background: #bfdbfe;
-  top: 40%;
-  left: 60%;
-  animation-delay: -4s;
-}
-
-@keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(30px, -50px) scale(1.1); }
-  100% { transform: translate(-20px, 20px) scale(0.9); }
+  padding-bottom: 40px;
 }
 
 .content-container {
@@ -1559,9 +1482,9 @@ const handleReset = () => {
 .form-section {
   margin-bottom: 32px;
   padding: 24px 32px;
-  background-color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 255, 255, 0.35); /* 更透明，透出色彩 */
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
 }
 
@@ -1656,7 +1579,7 @@ const handleReset = () => {
 :deep(.el-select .el-input__wrapper),
 :deep(.el-date-editor.el-input__wrapper),
 :deep(.el-textarea__inner) {
-  background-color: rgba(248, 250, 252, 0.8) !important;
+  background-color: rgba(248, 250, 252, 0.6) !important;
   border-radius: 12px !important;
   padding: 8px 16px !important;
   box-shadow: 0 0 0 1px #e2e8f0 inset !important;
@@ -1953,9 +1876,9 @@ const handleReset = () => {
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.5); /* 降低卡片白度，使之更加毛玻璃 */
   border-radius: 16px;
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.5);
   padding: 20px 24px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;

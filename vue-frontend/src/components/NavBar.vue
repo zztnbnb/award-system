@@ -195,7 +195,8 @@ const handleLogout = async () => {
     await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
-      type: 'warning'
+      type: 'warning',
+      customClass: 'premium-message-box'
     })
     
     await request.post('/user/logout')
@@ -568,6 +569,100 @@ const handleChangePassword = async () => {
 .premium-dialog .el-button--primary:hover {
   background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
   box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+/* ==================================
+   全局 - 退出登录/消息确认框高级版 
+================================== */
+.premium-message-box {
+  border-radius: 16px !important;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  padding-bottom: 8px !important;
+  width: 420px !important;
+}
+
+/* 头部 Header */
+.premium-message-box .el-message-box__header {
+  padding: 24px 24px 12px 24px !important;
+}
+.premium-message-box .el-message-box__title {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  justify-content: flex-start !important;
+}
+.premium-message-box .el-message-box__headerbtn {
+  top: 24px !important;
+  right: 24px !important;
+}
+.premium-message-box .el-message-box__headerbtn .el-message-box__close {
+  color: #94a3b8 !important;
+  font-size: 16px !important;
+  transition: all 0.2s ease !important;
+}
+.premium-message-box .el-message-box__headerbtn:hover .el-message-box__close {
+  color: #0f172a !important;
+  transform: rotate(90deg);
+}
+
+/* 主干内容 Body */
+.premium-message-box .el-message-box__content {
+  padding: 16px 24px 24px 24px !important;
+  font-size: 16px !important;
+  color: #334155 !important;
+}
+.premium-message-box .el-message-box__container {
+  align-items: center !important;
+}
+/* 警告标识Icon美化 */
+.premium-message-box .el-message-box__status {
+  font-size: 28px !important;
+  color: #f59e0b !important; /* 琥珀橘，比默认黄更有质感 */
+}
+.premium-message-box .el-message-box__message {
+  padding-left: 12px !important;
+}
+
+/* 底部操作区 Footer */
+.premium-message-box .el-message-box__btns {
+  padding: 12px 24px 16px 24px !important;
+}
+
+/* 按键重塑 */
+.premium-message-box .el-message-box__btns .el-button {
+  border-radius: 8px !important;
+  padding: 8px 24px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  height: 38px !important;
+  border: none !important;
+  transition: all 0.3s ease !important;
+  margin-left: 12px !important;
+}
+/* 取消按钮 */
+.premium-message-box .el-message-box__btns .el-button--default {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+.premium-message-box .el-message-box__btns .el-button--default:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+/* 确定/警告按钮 */
+.premium-message-box .el-message-box__btns .el-button--primary {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25) !important;
+}
+.premium-message-box .el-message-box__btns .el-button--primary:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35) !important;
   transform: translateY(-1px);
 }
 </style>

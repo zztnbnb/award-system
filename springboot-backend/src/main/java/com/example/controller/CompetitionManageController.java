@@ -45,10 +45,12 @@ public class CompetitionManageController {
     @GetMapping("/list")
     public ResponseEntity<Map<String, Object>> getCompetitionList(
             @RequestParam(required = false) String competitionName,
+            @RequestParam(required = false) String awardRank,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer pageSize) {
         try {
-            Map<String, Object> result = competitionManageService.getCompetitionList(competitionName, page, pageSize);
+            Map<String, Object> result = competitionManageService.getCompetitionList(competitionName, awardRank, page,
+                    pageSize);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
@@ -149,7 +151,7 @@ public class CompetitionManageController {
     public ResponseEntity<byte[]> exportCompetitions(@RequestParam(required = false) String competitionName) {
         try {
             byte[] excelData = competitionManageService.exportCompetitions(competitionName);
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             String filename = "竞赛列表.xlsx";
@@ -159,7 +161,7 @@ public class CompetitionManageController {
                 e.printStackTrace();
             }
             headers.setContentDispositionFormData("attachment", filename);
-            
+
             return new ResponseEntity<>(excelData, headers, HttpStatus.OK);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);

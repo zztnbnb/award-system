@@ -27,26 +27,31 @@ public class StudentService {
      */
     public Map<String, Object> getStatistics() {
         Map<String, Object> statistics = new HashMap<>();
-        int totalCount = studentMapper.countStudents(null, null);
+        int totalCount = studentMapper.countStudents(null, null, null);
         statistics.put("totalCount", totalCount);
+
+        List<Map<String, Object>> gradeStats = studentMapper.countStudentsByGrade();
+        statistics.put("gradeStats", gradeStats);
+
         return statistics;
     }
 
     /**
      * 分页查询学生列表
      */
-    public Map<String, Object> getStudentList(String studentNumber, String grade, Integer page, Integer pageSize) {
+    public Map<String, Object> getStudentList(String studentNumber, String grade, String className, Integer page,
+            Integer pageSize) {
         int offset = (page - 1) * pageSize;
-        
-        List<Student> list = studentMapper.selectStudentList(studentNumber, grade, offset, pageSize);
-        int total = studentMapper.countStudents(studentNumber, grade);
-        
+
+        List<Student> list = studentMapper.selectStudentList(studentNumber, grade, className, offset, pageSize);
+        int total = studentMapper.countStudents(studentNumber, grade, className);
+
         Map<String, Object> result = new HashMap<>();
         result.put("list", list);
         result.put("total", total);
         result.put("page", page);
         result.put("pageSize", pageSize);
-        
+
         return result;
     }
 
@@ -70,7 +75,7 @@ public class StudentService {
         if (student.getGrade() == null || student.getGrade().trim().isEmpty()) {
             throw new Exception("年级不能为空");
         }
-        
+
         studentMapper.insertStudent(student);
     }
 
@@ -90,7 +95,7 @@ public class StudentService {
         if (student.getGrade() == null || student.getGrade().trim().isEmpty()) {
             throw new Exception("年级不能为空");
         }
-        
+
         studentMapper.updateStudent(student);
     }
 
@@ -101,7 +106,7 @@ public class StudentService {
         if (studentId == null) {
             throw new Exception("学生ID不能为空");
         }
-        
+
         studentMapper.deleteStudent(studentId);
     }
 
@@ -112,33 +117,40 @@ public class StudentService {
         if (ids == null || ids.isEmpty()) {
             throw new Exception("请选择要删除的学生");
         }
-        
+
         studentMapper.batchDeleteStudents(ids);
+    }
+
+    /**
+     * 查询所有去重班级
+     */
+    public List<String> getDistinctClasses() {
+        return studentMapper.selectDistinctClasses();
     }
 
     /**
      * 导出学生数据为Excel
      */
-    public byte[] exportStudents(String studentNumber, String grade) throws IOException {
-        List<Student> students = studentMapper.selectAllStudents(studentNumber, grade);
-        
+    public byte[] exportStudents(String studentNumber, String grade, String className) throws IOException {
+        List<Student> students = studentMapper.selectAllStudents(studentNumber, grade, className);
+
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("学生列表");
-        
+
         // 创建表头
         Row headerRow = sheet.createRow(0);
         CellStyle headerStyle = workbook.createCellStyle();
         Font headerFont = workbook.createFont();
         headerFont.setBold(true);
         headerStyle.setFont(headerFont);
-        
-        String[] headers = {"序号", "学号", "姓名", "年级", "专业", "班级", "学院"};
+
+        String[] headers = { "序号", "学号", "姓名", "年级", "专业", "班级", "学院" };
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers[i]);
             cell.setCellStyle(headerStyle);
         }
-        
+
         // 填充数据
         int rowNum = 1;
         for (Student student : students) {
@@ -152,16 +164,16 @@ public class StudentService {
             row.createCell(6).setCellValue(student.getCollege());
             rowNum++;
         }
-        
+
         // 自动调整列宽
         for (int i = 0; i < headers.length; i++) {
             sheet.autoSizeColumn(i);
         }
-        
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         workbook.write(outputStream);
         workbook.close();
-        
+
         return outputStream.toByteArray();
     }
 
@@ -172,20 +184,21 @@ public class StudentService {
         if (file.isEmpty()) {
             throw new Exception("上传文件不能为空");
         }
-        
+
         List<Student> successList = new ArrayList<>();
         List<String> errorList = new ArrayList<>();
-        
+
         try (InputStream inputStream = file.getInputStream();
-             Workbook workbook = new XSSFWorkbook(inputStream)) {
-            
+                Workbook workbook = new XSSFWorkbook(inputStream)) {
+
             Sheet sheet = workbook.getSheetAt(0);
             int rowCount = sheet.getPhysicalNumberOfRows();
-            
+
             for (int i = 1; i < rowCount; i++) {
                 Row row = sheet.getRow(i);
-                if (row == null) continue;
-                
+                if (row == null)
+                    continue;
+
                 try {
                     // 第0列是序号，从第1列开始读取数据
                     Cell numberCell = row.getCell(1);
@@ -194,24 +207,24 @@ public class StudentService {
                     Cell majorCell = row.getCell(4);
                     Cell classCell = row.getCell(5);
                     Cell collegeCell = row.getCell(6);
-                    
+
                     if (numberCell == null || nameCell == null || gradeCell == null) {
                         errorList.add("第" + (i + 1) + "行：学号、姓名或年级为空");
                         continue;
                     }
-                    
+
                     String studentNumber = getCellValueAsString(numberCell);
                     String studentName = getCellValueAsString(nameCell);
                     String grade = getCellValueAsString(gradeCell);
                     String major = getCellValueAsString(majorCell);
                     String className = getCellValueAsString(classCell);
                     String college = getCellValueAsString(collegeCell);
-                    
+
                     if (studentNumber.trim().isEmpty() || studentName.trim().isEmpty() || grade.trim().isEmpty()) {
                         errorList.add("第" + (i + 1) + "行：学号、姓名或年级为空");
                         continue;
                     }
-                    
+
                     Student student = new Student();
                     student.setStudentNumber(studentNumber);
                     student.setStudentName(studentName);
@@ -219,21 +232,21 @@ public class StudentService {
                     student.setMajor(major);
                     student.setClassName(className);
                     student.setCollege(college);
-                    
+
                     studentMapper.insertStudent(student);
                     successList.add(student);
-                    
+
                 } catch (Exception e) {
                     errorList.add("第" + (i + 1) + "行：" + e.getMessage());
                 }
             }
         }
-        
+
         Map<String, Object> result = new HashMap<>();
         result.put("successCount", successList.size());
         result.put("errorCount", errorList.size());
         result.put("errors", errorList);
-        
+
         return result;
     }
 
@@ -244,7 +257,7 @@ public class StudentService {
         try {
             // 新密码格式：SY + 学号
             String newPassword = "SY" + studentNumber;
-            
+
             // 更新密码
             int result = studentMapper.updatePassword(studentId, newPassword);
             return result > 0;
@@ -258,8 +271,9 @@ public class StudentService {
      * 获取单元格值为字符串
      */
     private String getCellValueAsString(Cell cell) {
-        if (cell == null) return "";
-        
+        if (cell == null)
+            return "";
+
         switch (cell.getCellType()) {
             case STRING:
                 return cell.getStringCellValue();

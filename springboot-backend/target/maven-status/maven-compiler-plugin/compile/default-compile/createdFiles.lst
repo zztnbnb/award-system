@@ -7,6 +7,7 @@ com\example\controller\UserController.class
 com\example\mapper\ApplicationMapper.class
 com\example\mapper\StudentMapper.class
 com\example\entity\Student.class
+com\example\common\WebMvcConfig.class
 com\example\service\ReviewService.class
 com\example\dto\ApplicationSubmitDTO.class
 com\example\mapper\UserMapper.class

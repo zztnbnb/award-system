@@ -1,13 +1,5 @@
 <template>
   <div class="login-wrapper">
-    <!-- 抽象背景纹理：细微的波浪线和网格，减少单调感 -->
-    <div class="bg-pattern"></div>
-    
-    <!-- 动态背景光晕 -->
-    <div class="color-blob blob-1"></div>
-    <div class="color-blob blob-2"></div>
-    <div class="color-blob blob-3"></div>
-
     <div class="login-container">
       <div class="login-card glass-effect">
         <!-- 卡片内部微妙的装饰元素 -->
@@ -138,68 +130,11 @@ const handleLogin = () => {
 .login-wrapper {
   position: relative;
   width: 100%;
-  height: 100vh;
-  background-color: #f8fafc; /* 极浅灰底色 */
-  overflow: hidden;
+  min-height: 100vh;
+  /* background 交给 App.vue 处理 */
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* 叠加一层极浅弱、精致的波点/网格纹理 */
-.bg-pattern {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-  background-size: 32px 32px;
-  opacity: 0.4;
-  z-index: 0;
-}
-
-/* 动态流光的背景色块 */
-.color-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.6;
-  animation: float 10s infinite ease-in-out alternate;
-}
-
-.blob-1 {
-  width: 400px;
-  height: 400px;
-  background: #bae6fd; /* 浅蓝色 */
-  top: -10%;
-  left: -5%;
-  animation-delay: 0s;
-}
-
-.blob-2 {
-  width: 500px;
-  height: 500px;
-  background: #ddd6fe; /* 浅紫偏蓝色 */
-  bottom: -20%;
-  right: -10%;
-  animation-delay: -2s;
-}
-
-.blob-3 {
-  width: 300px;
-  height: 300px;
-  background: #bfdbfe; /* 较深的浅蓝色 */
-  top: 40%;
-  left: 60%;
-  animation-delay: -4s;
-}
-
-@keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(30px, -50px) scale(1.1); }
-  100% { transform: translate(-20px, 20px) scale(0.9); }
 }
 
 .login-container {

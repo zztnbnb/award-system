@@ -40,16 +40,34 @@ public class StudentController {
     }
 
     /**
+     * 获取所有班级集合
+     */
+    @GetMapping("/classes")
+    public ResponseEntity<Map<String, Object>> getDistinctClasses() {
+        try {
+            List<String> classes = studentService.getDistinctClasses();
+            Map<String, Object> result = new HashMap<>();
+            result.put("data", classes);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
      * 分页查询学生列表
      */
     @GetMapping("/list")
     public ResponseEntity<Map<String, Object>> getStudentList(
             @RequestParam(required = false) String studentNumber,
             @RequestParam(required = false) String grade,
+            @RequestParam(required = false) String className,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer pageSize) {
         try {
-            Map<String, Object> result = studentService.getStudentList(studentNumber, grade, page, pageSize);
+            Map<String, Object> result = studentService.getStudentList(studentNumber, grade, className, page, pageSize);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
@@ -149,10 +167,11 @@ public class StudentController {
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportStudents(
             @RequestParam(required = false) String studentNumber,
-            @RequestParam(required = false) String grade) {
+            @RequestParam(required = false) String grade,
+            @RequestParam(required = false) String className) {
         try {
-            byte[] excelData = studentService.exportStudents(studentNumber, grade);
-            
+            byte[] excelData = studentService.exportStudents(studentNumber, grade, className);
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             String filename = "学生列表.xlsx";
@@ -162,7 +181,7 @@ public class StudentController {
                 e.printStackTrace();
             }
             headers.setContentDispositionFormData("attachment", filename);
-            
+
             return new ResponseEntity<>(excelData, headers, HttpStatus.OK);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
@@ -192,11 +211,11 @@ public class StudentController {
         try {
             Integer studentId = (Integer) request.get("studentId");
             String studentNumber = (String) request.get("studentNumber");
-            
+
             if (studentId == null || studentNumber == null || studentNumber.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(false);
             }
-            
+
             boolean result = studentService.resetPassword(studentId, studentNumber);
             return ResponseEntity.ok(result);
         } catch (Exception e) {

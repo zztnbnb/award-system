@@ -18,7 +18,16 @@
             <if test="competitionName != null and competitionName != ''">
                 AND competition_name LIKE CONCAT('%', #{competitionName}, '%')
             </if>
+            <if test="awardRank != null and awardRank != ''">
+                AND award_rank = #{awardRank}
+            </if>
         </where>
+    </select>
+
+    <!-- 根据等次查询竞赛数 -->
+    <select id="countByAwardRank" resultType="int">
+        SELECT COUNT(*) FROM competition
+        WHERE award_rank = #{awardRank}
     </select>
 
     <!-- 分页查询竞赛列表 -->
@@ -31,6 +40,9 @@
         <where>
             <if test="competitionName != null and competitionName != ''">
                 AND competition_name LIKE CONCAT('%', #{competitionName}, '%')
+            </if>
+            <if test="awardRank != null and awardRank != ''">
+                AND award_rank = #{awardRank}
             </if>
         </where>
         ORDER BY 
@@ -100,6 +112,9 @@
         <where>
             <if test="competitionName != null and competitionName != ''">
                 AND competition_name LIKE CONCAT('%', #{competitionName}, '%')
+            </if>
+            <if test="awardRank != null and awardRank != ''">
+                AND award_rank = #{awardRank}
             </if>
         </where>
         ORDER BY 

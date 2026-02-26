@@ -10,12 +10,47 @@
           </div>
         </template>
         
-        <!-- 统计信息 -->
-        <div class="statistics-bar">
-          <div class="stat-item">
-            <div class="stat-value">{{ statistics.totalCount }}</div>
+        <!-- 高级拟态统计面板 -->
+        <div class="advanced-statistics-bar">
+          <div 
+            class="advanced-stat-card theme-total"
+            :class="{ 'is-active': filterGrade === '' }"
+            @click="handleGradeCardClick('')"
+          >
             <div class="stat-label">学生总数</div>
+            <div class="stat-value">{{ statistics.totalCount }}</div>
           </div>
+          <template v-if="statistics.gradeStats && statistics.gradeStats.length > 0">
+            <div 
+              v-for="(item, index) in statistics.gradeStats" 
+              :key="item.grade"
+              class="advanced-stat-card"
+              :class="['theme-grade-' + ((index % 4) + 1), { 'is-active': filterGrade === item.grade }]"
+              @click="handleGradeCardClick(item.grade)"
+            >
+              <div class="stat-label">{{ item.grade }}学生</div>
+              <div class="stat-value">{{ item.count }}</div>
+            </div>
+          </template>
+          <!-- 缺省状态占位符，保持布局骨架 -->
+          <template v-else>
+            <div class="advanced-stat-card theme-grade-1">
+              <div class="stat-label">22级学生</div>
+              <div class="stat-value">0</div>
+            </div>
+            <div class="advanced-stat-card theme-grade-2">
+              <div class="stat-label">23级学生</div>
+              <div class="stat-value">0</div>
+            </div>
+            <div class="advanced-stat-card theme-grade-3">
+              <div class="stat-label">24级学生</div>
+              <div class="stat-value">0</div>
+            </div>
+            <div class="advanced-stat-card theme-grade-4">
+              <div class="stat-label">25级学生</div>
+              <div class="stat-value">0</div>
+            </div>
+          </template>
         </div>
         
         <!-- 操作栏 -->
@@ -45,12 +80,24 @@
           <div class="right-filters">
             <el-input
               v-model="searchKeyword"
-              placeholder="请输入学号查询"
+              placeholder="请输入学号或姓名查询"
               clearable
               @input="handleSearch"
-              style="width: 200px; margin-right: 20px"
+              style="width: 240px; margin-right: 20px"
               :prefix-icon="Search"
             />
+            <el-button @click="openClassSelectDialog" style="margin-right: 10px">
+              {{ filterClass ? filterClass : '选择班级' }}
+            </el-button>
+            <el-button 
+              v-if="filterClass" 
+              link 
+              type="danger" 
+              @click="clearClassFilter" 
+              style="margin-right: 20px"
+            >
+              清除
+            </el-button>
             <el-select
               v-model="filterGrade"
               placeholder="选择年级"
@@ -58,10 +105,7 @@
               @change="handleSearch"
               style="width: 120px; margin-right: 20px"
             >
-              <el-option label="22级" value="22级" />
-              <el-option label="23级" value="23级" />
-              <el-option label="24级" value="24级" />
-              <el-option label="25级" value="25级" />
+              <el-option v-for="g in dynamicGradeOptions" :key="g" :label="g" :value="g" />
             </el-select>
             <span style="color: #606266; font-size: 14px; white-space: nowrap; display: inline-block; min-width: 100px;">
               共 {{ pagination.total }} 条信息
@@ -121,12 +165,36 @@
       </el-card>
     </div>
 
+    <!-- 选择班级弹窗 -->
+    <el-dialog
+      v-model="classDialogVisible"
+      title="选择班级"
+      width="600px"
+    >
+      <div class="class-list" style="max-height: 400px; overflow-y: auto;">
+        <el-button 
+          v-for="c in classList" 
+          :key="c" 
+          @click="selectClass(c)"
+          style="margin: 0 10px 10px 0;"
+          :type="filterClass === c ? 'primary' : 'default'"
+        >
+          {{ c }}
+        </el-button>
+        <div v-if="classList.length === 0" style="color: #909399; text-align: center; margin-top: 20px;">
+          暂无班级数据
+        </div>
+      </div>
+    </el-dialog>
+
     <!-- 新增/编辑弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
       width="600px"
       @close="handleDialogClose"
+      class="premium-dialog"
+      :destroy-on-close="true"
     >
       <el-form
         ref="formRef"
@@ -149,16 +217,15 @@
           />
         </el-form-item>
         <el-form-item label="年级" prop="grade">
-          <el-select
+          <el-date-picker
             v-model="formData.grade"
-            placeholder="请选择年级"
+            type="year"
+            placeholder="请选择入学年份"
+            format="YY级"
+            value-format="YY级"
             style="width: 100%"
-          >
-            <el-option label="22级" value="22级" />
-            <el-option label="23级" value="23级" />
-            <el-option label="24级" value="24级" />
-            <el-option label="25级" value="25级" />
-          </el-select>
+            popper-class="premium-picker-popper"
+          />
         </el-form-item>
         <el-form-item label="专业" prop="major">
           <el-input
@@ -194,6 +261,7 @@
       title="重置学生密码"
       width="600px"
       @close="handleResetPasswordDialogClose"
+      class="premium-dialog"
     >
       <el-form
         ref="resetPasswordFormRef"
@@ -260,7 +328,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Edit, Search, Upload, Download } from '@element-plus/icons-vue'
 import axios from 'axios'
@@ -275,10 +343,49 @@ const dialogTitle = ref('新增学生')
 const formRef = ref(null)
 const searchKeyword = ref('')
 const filterGrade = ref('')
+const filterClass = ref('')
+const classDialogVisible = ref(false)
+const classList = ref([])
+
+const loadClasses = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/classes`)
+    classList.value = response.data.data || []
+  } catch (error) {
+    console.error('获取班级列表失败:', error)
+  }
+}
+
+const openClassSelectDialog = () => {
+  loadClasses()
+  classDialogVisible.value = true
+}
+
+const selectClass = (className) => {
+  filterClass.value = className
+  classDialogVisible.value = false
+  handleSearch()
+}
+
+const clearClassFilter = () => {
+  filterClass.value = ''
+  handleSearch()
+}
+
 const selectedIds = ref([])
 
+// 动态计算年级列表（基于后端返回的实际有数据的年级统计数据）
+const dynamicGradeOptions = computed(() => {
+  if (statistics.gradeStats && statistics.gradeStats.length > 0) {
+    return statistics.gradeStats.map(item => item.grade)
+  }
+  // 兜底空数组，利用 allow-create 特性用户可以直接自行输入保存，保存后下一次请求统计就会包含自动成为了新选项
+  return [] 
+})
+
 const statistics = reactive({
-  totalCount: 0
+  totalCount: 0,
+  gradeStats: []
 })
 
 const pagination = reactive({
@@ -336,6 +443,7 @@ const loadStatistics = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/statistics`)
     statistics.totalCount = response.data.totalCount || 0
+    statistics.gradeStats = response.data.gradeStats || []
   } catch (error) {
     console.error('加载统计信息失败:', error)
   }
@@ -348,6 +456,7 @@ const loadStudentList = async () => {
       params: {
         studentNumber: searchKeyword.value,
         grade: filterGrade.value,
+        className: filterClass.value,
         page: pagination.page,
         pageSize: pagination.pageSize
       }
@@ -459,6 +568,12 @@ const handleSearch = () => {
   loadStudentList()
 }
 
+// 点击卡片筛选年级
+const handleGradeCardClick = (grade) => {
+  filterGrade.value = grade
+  handleSearch()
+}
+
 const handlePageChange = (page) => {
   pagination.page = page
   loadStudentList()
@@ -527,7 +642,8 @@ const handleExport = async () => {
     const response = await axios.get(`${API_BASE_URL}/export`, {
       params: {
         studentNumber: searchKeyword.value,
-        grade: filterGrade.value
+        grade: filterGrade.value,
+        className: filterClass.value
       },
       responseType: 'blob'
     })
@@ -657,7 +773,7 @@ const handleResetPasswordDialogClose = () => {
 <style scoped>
 .student-manage-page {
   min-height: 100vh;
-  background-color: #f5f7fa;
+  /* background 交由 App.vue 处理 */
 }
 
 .content-container {
@@ -668,6 +784,12 @@ const handleResetPasswordDialogClose = () => {
 
 .manage-card {
   margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05) !important;
 }
 
 .card-header {
@@ -682,37 +804,158 @@ const handleResetPasswordDialogClose = () => {
   color: #303133;
 }
 
-.statistics-bar {
+/* ====== 高级拟态统计面板 ====== */
+.advanced-statistics-bar {
   display: flex;
-  gap: 40px;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8px;
-  margin-bottom: 20px;
+  flex-wrap: wrap; 
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
-.stat-item {
-  text-align: center;
-  color: white;
+.advanced-stat-card {
+  flex: 0 1 calc(20% - 16px); 
+  min-width: 140px; 
+  max-width: none;
+  border-radius: 20px; /* 加大圆角 */
+  padding: 24px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* 更实一点的初始阴影 */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
-.stat-value {
-  font-size: 32px;
-  font-weight: bold;
-  margin-bottom: 8px;
+/* 移除旧的空背景框，使用发光背板 */
+.advanced-stat-card::after {
+  display: none;
+}
+.advanced-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: inherit;
+  filter: blur(20px);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 0;
 }
 
-.stat-label {
-  font-size: 14px;
-  opacity: 0.9;
+.advanced-stat-card:hover, .advanced-stat-card.is-active {
+  transform: scale(1.02);
+  border-width: 1px; /* 覆盖旧特效 */
+}
+.advanced-stat-card:hover::before, .advanced-stat-card.is-active::before { 
+  opacity: 0.2; 
+}
+
+.advanced-stat-card .stat-label {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.advanced-stat-card .stat-value {
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+/* ====== 多彩主题配色渐变 ====== */
+
+/* 冰晶蓝 - 总数 */
+.theme-total {
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.65) 0%, rgba(255, 255, 255, 0.3) 100%);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+.theme-total .stat-label { color: #4f46e5; }
+.theme-total .stat-value { background-image: linear-gradient(to right, #4338ca, #818cf8); }
+.theme-total:hover, .theme-total.is-active { 
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.85) 0%, rgba(224, 231, 255, 0.6) 100%);
+  box-shadow: 0 10px 40px -10px rgba(79, 70, 229, 0.35);
+  border-color: rgba(199, 210, 254, 0.9);
+}
+
+/* 樱花粉 - 第1年级 (22级) */
+.theme-grade-1 {
+  background: linear-gradient(135deg, rgba(255, 241, 242, 0.65) 0%, rgba(255, 255, 255, 0.3) 100%);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+.theme-grade-1 .stat-label { color: #e11d48; }
+.theme-grade-1 .stat-value { background-image: linear-gradient(to right, #be123c, #fb7185); }
+.theme-grade-1:hover, .theme-grade-1.is-active { 
+  background: linear-gradient(135deg, rgba(255, 241, 242, 0.85) 0%, rgba(255, 228, 230, 0.6) 100%);
+  box-shadow: 0 10px 40px -10px rgba(225, 29, 72, 0.35);
+  border-color: rgba(254, 205, 211, 0.9);
+}
+
+/* 元气橙 - 第2年级 (23级) */
+.theme-grade-2 {
+  background: linear-gradient(135deg, rgba(255, 247, 237, 0.65) 0%, rgba(255, 255, 255, 0.3) 100%);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+.theme-grade-2 .stat-label { color: #ea580c; }
+.theme-grade-2 .stat-value { background-image: linear-gradient(to right, #c2410c, #fb923c); }
+.theme-grade-2:hover, .theme-grade-2.is-active { 
+  background: linear-gradient(135deg, rgba(255, 247, 237, 0.85) 0%, rgba(255, 237, 213, 0.6) 100%);
+  box-shadow: 0 10px 40px -10px rgba(234, 88, 12, 0.35);
+  border-color: rgba(254, 215, 170, 0.9);
+}
+
+/* 阳光黄 - 第3年级 (24级) */
+.theme-grade-3 {
+  background: linear-gradient(135deg, rgba(254, 252, 232, 0.65) 0%, rgba(255, 255, 255, 0.3) 100%);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+.theme-grade-3 .stat-label { color: #ca8a04; }
+.theme-grade-3 .stat-value { background-image: linear-gradient(to right, #a16207, #facc15); }
+.theme-grade-3:hover, .theme-grade-3.is-active { 
+  background: linear-gradient(135deg, rgba(254, 252, 232, 0.85) 0%, rgba(254, 249, 195, 0.6) 100%);
+  box-shadow: 0 10px 40px -10px rgba(202, 138, 4, 0.35);
+  border-color: rgba(254, 240, 138, 0.9);
+}
+
+/* 薄荷绿 - 第4年级 (25级) */
+.theme-grade-4 {
+  background: linear-gradient(135deg, rgba(240, 253, 244, 0.65) 0%, rgba(255, 255, 255, 0.3) 100%);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+.theme-grade-4 .stat-label { color: #16a34a; }
+.theme-grade-4 .stat-value { background-image: linear-gradient(to right, #15803d, #4ade80); }
+.theme-grade-4:hover, .theme-grade-4.is-active { 
+  background: linear-gradient(135deg, rgba(240, 253, 244, 0.85) 0%, rgba(220, 252, 231, 0.6) 100%);
+  box-shadow: 0 10px 40px -10px rgba(22, 163, 74, 0.35);
+  border-color: rgba(187, 247, 208, 0.9);
 }
 
 .filter-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 15px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.2) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 16px 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.05);
   margin-bottom: 20px;
-  gap: 10px;
 }
 
 .left-actions {
@@ -724,5 +967,344 @@ const handleResetPasswordDialogClose = () => {
 .right-filters {
   display: flex;
   align-items: center;
+}
+
+/* ======== 表格与筛选区深度重构：现代玻璃与微缩阴影 ======== */
+
+/* 搜索框与表单输入框拟态圆角化（长方形高级圆角，大气尺寸） */
+:deep(.el-input__wrapper) {
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  padding: 8px 16px; /* 增加上下内边距，撑高表单 */
+}
+:deep(.el-input__inner) {
+  font-size: 15px; /* 略微加大字体 */
+  color: #334155;
+  height: 32px; 
+  line-height: 32px;
+}
+
+:deep(.el-input__wrapper:hover), :deep(.el-input__wrapper.is-focus) {
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15) !important;
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* 弹窗高级宽敞布局 */
+:deep(.premium-dialog) {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+:deep(.premium-dialog .el-dialog__header) {
+  padding: 24px 30px;
+  margin: 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  background: rgba(248, 250, 252, 0.5);
+}
+:deep(.premium-dialog .el-dialog__title) {
+  font-weight: 700;
+  font-size: 18px;
+  color: #1e293b;
+}
+:deep(.premium-dialog .el-dialog__body) {
+  padding: 35px 40px; /* 拉大主体区的上下左右边距 */
+}
+:deep(.premium-dialog .el-form-item) {
+  margin-bottom: 24px; /* 增加表单项的纵向呼吸感间距 */
+}
+:deep(.premium-dialog .el-form-item__label) {
+  font-weight: 600;
+  color: #475569;
+  padding-right: 20px;
+}
+:deep(.premium-dialog .el-dialog__footer) {
+  padding: 20px 30px;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  background: rgba(248, 250, 252, 0.5);
+}
+:deep(.el-button) {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: none;
+}
+:deep(.el-button:hover) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  filter: brightness(1.05); /* 仅用少许亮度变化代替位移，按客户要求不要往上跑 */
+}
+
+/* 主按钮定制光效（“新增竞赛/编辑” 等） - 调浅更温和的高级紫/蓝 */
+:deep(.el-button--primary) {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(129, 140, 248, 0.9) 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.2);
+}
+:deep(.el-button--primary:hover) {
+  background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+  box-shadow: 0 6px 16px -2px rgba(99, 102, 241, 0.35);
+}
+
+/* 危险按钮定制光效（“批量删除/删除” 等） - 调浅更通透的玫瑰色/水红 */
+:deep(.el-button--danger) {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.85) 0%, rgba(251, 113, 133, 0.9) 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px -2px rgba(244, 63, 94, 0.2);
+}
+:deep(.el-button--danger:hover) {
+  background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%);
+  box-shadow: 0 6px 16px -2px rgba(244, 63, 94, 0.35);
+}
+
+/* 默认按钮定制光效（“批量导入/导出” 等） */
+:deep(.el-button--default) {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  color: #475569;
+  backdrop-filter: blur(4px);
+}
+:deep(.el-button--default:hover) {
+  background: #ffffff;
+  color: #4f46e5;
+  border-color: #c7d2fe;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+/* 警告按钮定制光效（重置密码） */
+:deep(.el-button--warning) {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.85) 0%, rgba(251, 191, 36, 0.9) 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px -2px rgba(245, 158, 11, 0.2);
+}
+:deep(.el-button--warning:hover) {
+  background: linear-gradient(135deg, #f59e0b 0%, #fcd34d 100%);
+  box-shadow: 0 6px 16px -2px rgba(245, 158, 11, 0.35);
+}
+
+/* 主表格透明与拟态化 */
+:deep(.el-table) {
+  background-color: transparent !important;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  margin-top: 10px;
+  --el-table-border-color: rgba(226, 232, 240, 0.4);
+  --el-table-row-hover-bg-color: rgba(241, 245, 249, 0.7);
+}
+
+:deep(.el-table tr), :deep(.el-table th.el-table__cell) {
+  background-color: transparent !important;
+}
+
+/* 斑马隔行弱化处理，保持通透感 */
+:deep(.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell) {
+  background-color: rgba(248, 250, 252, 0.4) !important;
+}
+
+/* 表头重塑：微透强对比度 */
+:deep(.el-table th.el-table__cell) {
+  background: linear-gradient(180deg, rgba(241, 245, 249, 0.8) 0%, rgba(248, 250, 252, 0.5) 100%) !important;
+  color: #475569;
+  font-weight: 700;
+  font-size: 14px;
+  height: 56px;
+  border-bottom: 2px solid rgba(226, 232, 240, 0.8) !important;
+}
+
+/* 行悬浮高级高亮：毛玻璃呼吸光 */
+:deep(.el-table tbody tr:hover > td.el-table__cell) {
+  background: linear-gradient(90deg, rgba(238, 242, 255, 0.4) 0%, rgba(224, 231, 255, 0.6) 50%, rgba(238, 242, 255, 0.4) 100%) !important;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+}
+
+/* ======== 多选框组件(Checkbox)果冻悬浮特效 ======== */
+:deep(.el-checkbox__inner) {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(147, 197, 253, 0.8) !important; /* 浅蓝边框 */
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Q弹缩放 */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 悬浮微扩与高亮 */
+:deep(.el-checkbox:hover .el-checkbox__inner) {
+  border-color: #3b82f6 !important; /* 亮蓝 */
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+/* 选中高定渐变背景及厚重阴影 */
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  border-color: transparent !important;
+  transform: scale(1.1);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* 解决原版 Element Plus 容器会截断大面积 hover shadow 的 Bug */
+:deep(.el-table .cell),
+:deep(.el-table th.el-table__cell),
+:deep(.el-table td.el-table__cell),
+:deep(.el-checkbox),
+:deep(.el-checkbox__input) {
+  overflow: visible !important;
+}
+
+/* 内部对勾精细居中对齐及发光重构 */
+:deep(.el-checkbox__inner::after) {
+  box-sizing: content-box;
+  content: "";
+  border: 2px solid white;
+  border-left: 0;
+  border-top: 0;
+  height: 8px; 
+  width: 4px;
+  position: static !important;
+  margin-top: -2px;
+  margin-left: -1px;
+  transform: rotate(45deg) scaleY(0);
+  transition: transform .15s ease-in .05s;
+}
+
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner::after) {
+  transform: rotate(45deg) scaleY(1) !important;
+}
+
+/* 单元格字体精修 */
+:deep(.el-table td.el-table__cell) {
+  padding: 14px 0;
+  color: #334155;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.4);
+}
+
+/* 分页器收尾圆角及悬浮加持 */
+:deep(.el-pagination) {
+  margin-top: 24px !important;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+:deep(.el-pagination button), :deep(.el-pager li) {
+  background: transparent !important;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+:deep(.el-pager li:hover) {
+  color: #4f46e5;
+  background: rgba(238, 242, 255, 0.8) !important;
+}
+:deep(.el-pager li.is-active) {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  font-weight: bold;
+}
+</style>
+
+<style>
+/* ====== 全局或弹出层日历美化 (强视觉冲击版) ====== */
+.premium-picker-popper {
+  border-radius: 16px !important;
+  border: 1px solid rgba(99, 102, 241, 0.2) !important;
+  box-shadow: 0 20px 50px -12px rgba(79, 70, 229, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.5) inset !important;
+  padding: 12px !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
+  backdrop-filter: blur(20px);
+}
+
+/* 顶部年份区间标题区域 */
+.premium-picker-popper .el-date-picker__header {
+  margin: 8px 12px 20px;
+  position: relative;
+}
+.premium-picker-popper .el-date-picker__header::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 10%;
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+}
+
+.premium-picker-popper .el-date-picker__header-label {
+  font-weight: 800;
+  color: #1e293b;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+/* 左右切页图标按钮 */
+.premium-picker-popper .el-picker-panel__icon-btn {
+  color: #6366f1;
+  font-weight: bold;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+.premium-picker-popper .el-picker-panel__icon-btn:hover {
+  color: #4338ca;
+  background-color: #e0e7ff;
+  border-radius: 50%;
+  transform: scale(1.1);
+}
+
+/* 年份单元格包裹层 */
+.premium-picker-popper .el-year-table td {
+  padding: 8px 4px;
+}
+
+/* 年份文本主体 */
+.premium-picker-popper .el-year-table td .cell {
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  height: 44px;
+  line-height: 44px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: #475569;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+}
+
+/* 悬停特效：浮现带边框的微光背景 */
+.premium-picker-popper .el-year-table td .cell:hover {
+  background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+  color: #4f46e5;
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px -3px rgba(99, 102, 241, 0.15);
+}
+
+/* 选中当前年份：强烈的渐变冲击按钮 */
+.premium-picker-popper .el-year-table td.current:not(.disabled) .cell {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.3) !important;
+  font-weight: 800;
+  border: none;
+  transform: scale(1.05);
+}
+
+/* 禁用年份的微弱存在感 */
+.premium-picker-popper .el-year-table td.disabled .cell {
+  background-color: transparent;
+  color: #cbd5e1;
+  font-weight: 400;
 }
 </style>

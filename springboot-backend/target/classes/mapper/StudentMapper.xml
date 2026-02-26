@@ -20,12 +20,32 @@
         SELECT COUNT(*) FROM student
         <where>
             <if test="studentNumber != null and studentNumber != ''">
-                AND student_number = #{studentNumber}
+                AND (student_number LIKE CONCAT('%', #{studentNumber}, '%') 
+                     OR student_name LIKE CONCAT('%', #{studentNumber}, '%'))
             </if>
             <if test="grade != null and grade != ''">
                 AND grade = #{grade}
             </if>
+            <if test="className != null and className != ''">
+                AND class_name LIKE CONCAT('%', #{className}, '%')
+            </if>
         </where>
+    </select>
+
+    <!-- 查询所有班级 -->
+    <select id="selectDistinctClasses" resultType="java.lang.String">
+        SELECT DISTINCT class_name 
+        FROM student 
+        WHERE class_name IS NOT NULL AND class_name != ''
+        ORDER BY class_name ASC
+    </select>
+
+    <!-- 查询各年级学生人数统计 -->
+    <select id="countStudentsByGrade" resultType="java.util.Map">
+        SELECT grade, COUNT(*) as count 
+        FROM student 
+        GROUP BY grade
+        ORDER BY grade DESC
     </select>
 
     <!-- 分页查询学生列表 -->
@@ -41,10 +61,14 @@
         FROM student
         <where>
             <if test="studentNumber != null and studentNumber != ''">
-                AND student_number = #{studentNumber}
+                AND (student_number LIKE CONCAT('%', #{studentNumber}, '%') 
+                     OR student_name LIKE CONCAT('%', #{studentNumber}, '%'))
             </if>
             <if test="grade != null and grade != ''">
                 AND grade = #{grade}
+            </if>
+            <if test="className != null and className != ''">
+                AND class_name LIKE CONCAT('%', #{className}, '%')
             </if>
         </where>
         ORDER BY grade ASC, student_id ASC
@@ -125,10 +149,14 @@
         FROM student
         <where>
             <if test="studentNumber != null and studentNumber != ''">
-                AND student_number = #{studentNumber}
+                AND (student_number LIKE CONCAT('%', #{studentNumber}, '%') 
+                     OR student_name LIKE CONCAT('%', #{studentNumber}, '%'))
             </if>
             <if test="grade != null and grade != ''">
                 AND grade = #{grade}
+            </if>
+            <if test="className != null and className != ''">
+                AND class_name LIKE CONCAT('%', #{className}, '%')
             </if>
         </where>
         ORDER BY grade ASC, student_id ASC
