@@ -4,6 +4,7 @@ D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\controller\ApplicationController.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\controller\CompetitionManageController.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\controller\ReviewController.java
+D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\controller\StatisticsController.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\controller\StudentController.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\controller\UserController.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\dto\ApplicationSubmitDTO.java
@@ -25,6 +26,7 @@ D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\service\ApplicationService.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\service\CompetitionManageService.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\service\ReviewService.java
+D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\service\StatisticsService.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\service\StudentService.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\service\UserService.java
 D:\APP\Antigravity\givemefive\GiveMeFive\SAIMS\springboot-backend\src\main\java\com\example\SpringbootBackendApplication.java

@@ -384,4 +384,68 @@
         WHERE application_id = #{applicationId}
     </update>
 
+    <!-- ==================== 统计分析相关查询 ==================== -->
+
+    <!-- 按获奖等次统计已通过申请数量 -->
+    <select id="countApprovedByAwardRank" resultType="map">
+        SELECT aa.award_rank AS `rank`, COUNT(*) AS `count`
+        FROM award_application aa
+        WHERE aa.application_status = 'approved'
+          AND aa.award_rank IS NOT NULL AND aa.award_rank != ''
+        GROUP BY aa.award_rank
+        ORDER BY aa.award_rank
+    </select>
+
+    <!-- 按竞赛级别统计已通过申请数量 -->
+    <select id="countApprovedByCompetitionLevel" resultType="map">
+        SELECT aa.competition_level AS `level`, COUNT(*) AS `count`
+        FROM award_application aa
+        WHERE aa.application_status = 'approved'
+          AND aa.competition_level IS NOT NULL AND aa.competition_level != ''
+        GROUP BY aa.competition_level
+        ORDER BY `count` DESC
+    </select>
+
+    <!-- 按年级统计已通过申请数量 -->
+    <select id="countApprovedByGrade" resultType="map">
+        SELECT s.grade AS `grade`, COUNT(DISTINCT aa.application_id) AS `count`
+        FROM award_application aa
+        LEFT JOIN student s ON aa.student_id = s.student_id
+        WHERE aa.application_status = 'approved'
+          AND s.grade IS NOT NULL AND s.grade != ''
+        GROUP BY s.grade
+        ORDER BY s.grade
+    </select>
+
+    <!-- Top10 热门竞赛 -->
+    <select id="selectTop10Competitions" resultType="map">
+        SELECT c.competition_name AS `competitionName`, COUNT(aa.application_id) AS `count`
+        FROM award_application aa
+        LEFT JOIN competition c ON aa.competition_id = c.competition_id
+        WHERE c.competition_name IS NOT NULL
+        GROUP BY c.competition_id, c.competition_name
+        ORDER BY `count` DESC
+        LIMIT 10
+    </select>
+
+    <!-- 近12个月每月申请趋势 -->
+    <select id="selectMonthlyTrend" resultType="map">
+        SELECT
+            DATE_FORMAT(create_time, '%Y-%m') AS `month`,
+            COUNT(*) AS `totalCount`,
+            SUM(CASE WHEN application_status = 'approved' THEN 1 ELSE 0 END) AS `approvedCount`
+        FROM award_application
+        WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m')
+        ORDER BY `month` ASC
+    </select>
+
+    <!-- 按所有状态统计申请数量 -->
+    <select id="countByAllStatus" resultType="map">
+        SELECT application_status AS `status`, COUNT(*) AS `count`
+        FROM award_application
+        GROUP BY application_status
+    </select>
+
 </mapper>
+

@@ -3,6 +3,7 @@ com\example\controller\CompetitionManageController.class
 com\example\entity\Competition.class
 com\example\service\CompetitionManageService.class
 com\example\common\CorsConfig.class
+com\example\service\StatisticsService.class
 com\example\controller\UserController.class
 com\example\mapper\ApplicationMapper.class
 com\example\mapper\StudentMapper.class
@@ -17,6 +18,7 @@ com\example\common\Result.class
 com\example\entity\Team.class
 com\example\entity\TeamMember.class
 com\example\SpringbootBackendApplication.class
+com\example\controller\StatisticsController.class
 com\example\exception\GlobalExceptionHandler.class
 com\example\service\StudentService.class
 com\example\service\CompetitionManageService$1.class

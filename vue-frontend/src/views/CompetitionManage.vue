@@ -451,16 +451,16 @@ const getAwardRankType = (rank) => {
 <style scoped>
 .competition-manage-page {
   min-height: 100vh;
-  /* background 交由 App.vue 处理 */
 }
 
 .content-container {
-  max-width: 1100px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
 }
 
 .manage-card {
+  margin-top: 20px;
   margin-bottom: 20px;
   background: rgba(255, 255, 255, 0.65) !important;
   backdrop-filter: blur(20px);
@@ -475,6 +475,7 @@ const getAwardRankType = (rank) => {
   justify-content: space-between;
   align-items: center;
 }
+
 .card-header h2 {
   margin: 0;
   font-size: 20px;

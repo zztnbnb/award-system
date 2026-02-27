@@ -115,22 +115,26 @@
           <el-table-column type="selection" width="55" align="center" :selectable="isSelectable" />
           <el-table-column type="index" label="序号" width="80" align="center" />
           <el-table-column prop="studentNumber" label="学生学号" width="120" />
-          <el-table-column prop="competitionName" label="竞赛名称" min-width="180" />
+          <el-table-column prop="competitionName" label="竞赛名称" min-width="180">
+            <template #default="{ row }">
+              <div class="multi-line-content">{{ row.competitionName }}</div>
+            </template>
+          </el-table-column>
           <el-table-column prop="competitionLevel" label="竞赛级别" width="100" />
           <el-table-column label="获奖等级" width="100">
             <template #default="{ row }">
               <el-tag :type="getAwardRankType(row.awardRank)">{{ row.awardRank }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="awardTime" label="获奖时间" width="120" />
-          <el-table-column label="申请状态" width="100" align="center">
+          <el-table-column prop="awardTime" label="获奖时间" width="100" />
+          <el-table-column label="申请状态" width="90" align="center">
             <template #default="{ row }">
               <el-tag :type="getStatusType(row.applicationStatus)">
                 {{ getStatusText(row.applicationStatus) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="提交时间" width="160">
+          <el-table-column prop="createTime" label="提交时间" width="190">
             <template #default="{ row }">
               {{ formatDateTime(row.createTime) }}
             </template>
@@ -717,7 +721,6 @@ const handlePreviewDialogClose = () => {
 <style scoped>
 .admin-review-page {
   min-height: 100vh;
-  /* background 交由 App.vue 处理 */
 }
 
 .content-container {
@@ -727,6 +730,7 @@ const handlePreviewDialogClose = () => {
 }
 
 .review-card {
+  margin-top: 20px;
   margin-bottom: 20px;
   background: rgba(255, 255, 255, 0.65) !important;
   backdrop-filter: blur(20px);
@@ -1132,14 +1136,9 @@ const handlePreviewDialogClose = () => {
   box-shadow: 0 0 16px rgba(59, 130, 246, 0.5) !important; /* 更均匀的全向光晕，不再像切断的阴影 */
 }
 
-/* 解决原版 Element Plus 容器会截断大面积 hover shadow 的 Bug */
-/* 必须穿透到单元格 .cell 级别，否则表格单元的 `overflow: hidden` 会将上下的发光完美一刀切 */
-:deep(.el-table .cell),
-:deep(.el-table th.el-table__cell),
-:deep(.el-table td.el-table__cell),
-:deep(.el-checkbox),
-:deep(.el-checkbox__input) {
-  overflow: visible !important;
+/* 强制重写组件原来的 transform 以确保绝对居中，避免 Element Plus 的默认覆盖 */
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner::after) {
+  transform: rotate(45deg) scaleY(1) !important;
 }
 
 /* 内部对勾精细居中对齐及发光重构 */

@@ -126,9 +126,9 @@
           <el-table-column prop="studentNumber" label="学号" width="120" />
           <el-table-column prop="studentName" label="姓名" width="100" />
           <el-table-column prop="grade" label="年级" width="100" align="center" />
-          <el-table-column prop="major" label="专业" min-width="150" />
-          <el-table-column prop="className" label="班级" min-width="280" show-overflow-tooltip />
-          <el-table-column prop="college" label="学院" min-width="150" />
+          <el-table-column prop="major" label="专业" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="className" label="班级" min-width="260" show-overflow-tooltip />
+          <el-table-column prop="college" label="学院" min-width="200" show-overflow-tooltip />
           <el-table-column label="操作" width="180" align="center" fixed="right">
             <template #default="{ row }">
               <el-button 
@@ -773,16 +773,16 @@ const handleResetPasswordDialogClose = () => {
 <style scoped>
 .student-manage-page {
   min-height: 100vh;
-  /* background 交由 App.vue 处理 */
 }
 
 .content-container {
-  max-width: 1400px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 20px;
 }
 
 .manage-card {
+  margin-top: 20px;
   margin-bottom: 20px;
   background: rgba(255, 255, 255, 0.65) !important;
   backdrop-filter: blur(20px);

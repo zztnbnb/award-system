@@ -113,9 +113,6 @@
             <if test="competitionName != null and competitionName != ''">
                 AND competition_name LIKE CONCAT('%', #{competitionName}, '%')
             </if>
-            <if test="awardRank != null and awardRank != ''">
-                AND award_rank = #{awardRank}
-            </if>
         </where>
         ORDER BY 
             CASE award_rank

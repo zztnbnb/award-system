@@ -92,9 +92,17 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="competitionName" label="竞赛名称" min-width="180" />
-          <el-table-column prop="projectName" label="项目名称" min-width="150" />
-          <el-table-column prop="competitionLevel" label="竞赛级别" width="100" />
+          <el-table-column prop="competitionName" label="竞赛名称" min-width="240">
+            <template #default="{ row }">
+              <div class="multi-line-content">{{ row.competitionName }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="projectName" label="项目名称" min-width="150">
+            <template #default="{ row }">
+              <div class="multi-line-content">{{ row.projectName }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="competitionLevel" label="竞赛级别" width="110" />
           <el-table-column prop="awardRank" label="获奖等次" width="100" align="center">
             <template #default="{ row }">
               <el-tag :type="getAwardRankType(row.awardRank)">{{ row.awardRank }}</el-tag>
@@ -104,13 +112,12 @@
             <template #default="{ row }">
               <el-tag 
                 :type="getStatusType(row.applicationStatus)"
-                effect="dark"
               >
                 {{ row.statusText }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="提交时间" width="180">
+          <el-table-column prop="createTime" label="提交时间" width="190">
             <template #default="{ row }">
               {{ formatDateTime(row.createTime) }}
             </template>
@@ -533,13 +540,12 @@ const handlePreviewDialogClose = () => {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  /* background 已交由 App.vue 统一接管 */
   padding-bottom: 40px;
 }
 
 /* 这部分卡片以及表格透明逻辑已迁移到 App.vue 全局样式，此处可以精简 */
 .content-container {
-  max-width: 1400px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -803,6 +809,20 @@ const handlePreviewDialogClose = () => {
 :deep(.premium-table .el-tag--success) { background: #d1fae5; color: #059669; }
 :deep(.premium-table .el-tag--danger) { background: #fee2e2; color: #dc2626; }
 :deep(.premium-table .el-tag--info) { background: #f1f5f9; color: #475569; }
+
+/* 多行溢出控制 - 两行呈现且不要省略号 */
+.multi-line-content {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; /* 限制为两行 */
+  overflow: hidden;
+  line-height: 1.5;
+  max-height: 3em; /* 2行 * 1.5 line-height = 3em */
+  white-space: normal;
+  word-break: break-all;
+  /* 移除省略号的特殊技巧：通过极大的 line-clamp 结合 max-height */
+  -webkit-line-clamp: 10; 
+}
 
 /* 炫酷动画操作按钮 - 大品质软胶/药丸风格 */
 .action-btn-group {
