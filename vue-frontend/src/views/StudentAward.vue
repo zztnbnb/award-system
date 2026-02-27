@@ -370,6 +370,8 @@
                 :show-close="true"
                 width="auto"
                 align-center
+                append-to-body
+                @close="closePreviewDialog"
               >
                 <img :src="previewImageUrl" style="max-width: 80vw; max-height: 80vh; border-radius: 8px; display: block;" />
               </el-dialog>
@@ -647,6 +649,7 @@ const searchLoading = ref(false)
 // 文件预览相关
 const previewDialogVisible = ref(false)
 const previewImageUrl = ref('')
+let _previewBlobUrl = '' // 保存已创建的 Blob URL，关闭时释放
 
 const handlePreview = (uploadFile) => {
   const name = uploadFile.name || ''
@@ -656,8 +659,11 @@ const handlePreview = (uploadFile) => {
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
     if (uploadFile.url) {
       previewImageUrl.value = uploadFile.url
+      _previewBlobUrl = '' // 不是 Blob URL，无需释放
     } else if (uploadFile.raw) {
-      previewImageUrl.value = URL.createObjectURL(uploadFile.raw)
+      const blobUrl = URL.createObjectURL(uploadFile.raw)
+      previewImageUrl.value = blobUrl
+      _previewBlobUrl = blobUrl // 记录待释放的 Blob URL
     }
     previewDialogVisible.value = true
     return
@@ -685,6 +691,15 @@ const handlePreview = (uploadFile) => {
   } else {
     ElMessage.info('暂不支持在线预览该文件格式')
   }
+}
+
+// 弹窗关闭时释放 Blob URL，避免内存泄漏
+const closePreviewDialog = () => {
+  if (_previewBlobUrl) {
+    URL.revokeObjectURL(_previewBlobUrl)
+    _previewBlobUrl = ''
+  }
+  previewImageUrl.value = ''
 }
 
 // 删除已选的文件
@@ -866,15 +881,14 @@ const currentSelectOptions = ref([])
 
 // 常见赛事名录
 const commonCompetitionNames = [
-  '中国国际大学生创新大赛',
+  '全国大学生创新创业训练计划年会展示',
   '“挑战杯”全国大学生课外学术科技作品竞赛',
   '全国大学生电子设计竞赛',
   '全国大学生生物医学工程创新设计竞赛',
   '全国大学生数学建模竞赛',
   'ACM-ICPC国际大学生程序设计竞赛',
-  '中国大学生计算机设计竞赛',
   '全国大学生嵌入式芯片与系统设计竞赛',
-  '美国（国际）大学生数学建模竞赛 (MCM/ICM)',
+  '美国（国际）大学生数学建模竞赛（MCM/ICM）',
   '“蓝桥杯”全国软件和信息技术专业人才大赛'
 ]
 

@@ -15,7 +15,7 @@
         
         <!-- 大气优雅的数据看板 -->
         <div class="elegant-dashboard">
-          <div class="elegant-card primary">
+          <div class="elegant-card primary clickable" @click="setStatusFilter('')">
             <div class="card-info">
               <div class="card-title">总申请数</div>
               <div class="card-num">{{ statistics.total }}</div>
@@ -23,7 +23,7 @@
             <div class="card-bg-icon"><el-icon><Document /></el-icon></div>
           </div>
           
-          <div class="elegant-card pending">
+          <div class="elegant-card pending clickable" @click="setStatusFilter('pending')">
             <div class="card-info">
               <div class="card-title">待审核</div>
               <div class="card-num">{{ statistics.pending }}</div>
@@ -31,7 +31,7 @@
             <div class="card-bg-icon"><el-icon><Timer /></el-icon></div>
           </div>
           
-          <div class="elegant-card approved">
+          <div class="elegant-card approved clickable" @click="setStatusFilter('approved')">
             <div class="card-info">
               <div class="card-title">已通过</div>
               <div class="card-num">{{ statistics.approved }}</div>
@@ -39,7 +39,7 @@
             <div class="card-bg-icon"><el-icon><CircleCheck /></el-icon></div>
           </div>
           
-          <div class="elegant-card rejected">
+          <div class="elegant-card rejected clickable" @click="setStatusFilter('rejected')">
             <div class="card-info">
               <div class="card-title">已拒绝</div>
               <div class="card-num">{{ statistics.rejected }}</div>
@@ -47,7 +47,7 @@
             <div class="card-bg-icon"><el-icon><CircleClose /></el-icon></div>
           </div>
           
-          <div class="elegant-card returned">
+          <div class="elegant-card returned clickable" @click="setStatusFilter('returned')">
             <div class="card-info">
               <div class="card-title">已打回</div>
               <div class="card-num">{{ statistics.returned }}</div>
@@ -395,6 +395,17 @@ const filterRecords = () => {
   recordList.value = filtered
 }
 
+const handleFilterChange = () => {
+  // 状态筛选按钮改变时重新过滤
+  filterRecords()
+}
+
+// 点击统计卡片快速筛选
+const setStatusFilter = (status) => {
+  statusFilter.value = status
+  filterRecords()
+}
+
 const handleSearch = () => {
   // 应用搜索
   filterRecords()
@@ -692,6 +703,16 @@ const handlePreviewDialogClose = () => {
 
 .elegant-card.returned .card-num { color: #475569; }
 .elegant-card.returned .card-bg-icon { color: #94a3b8; }
+
+/* 可点击卡片的交互效果 */
+.elegant-card.clickable {
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+.elegant-card.clickable:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.12);
+}
 
 /* 过滤栏美化 */
 .premium-filter-bar {

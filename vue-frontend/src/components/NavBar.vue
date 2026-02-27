@@ -39,11 +39,13 @@
       </div>
       
       <div class="navbar-right">
-        <el-dropdown @command="handleCommand">
+        <el-dropdown @command="handleCommand" class="premium-dropdown-trigger">
           <span class="user-dropdown">
-            <el-icon><User /></el-icon>
+            <div class="user-avatar" :style="{ background: userAvatarBg }">
+              {{ userInitial }}
+            </div>
             <span class="username">{{ userInfo?.name || userInfo?.username }}</span>
-            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            <el-icon class="dropdown-arrow"><ArrowDown /></el-icon>
           </span>
           <template #dropdown>
             <el-dropdown-menu>
@@ -113,6 +115,22 @@ const userInfo = ref(null)
 const activeMenu = ref('')
 const passwordDialogVisible = ref(false)
 const passwordFormRef = ref(null)
+
+const userInitial = computed(() => {
+  const name = userInfo.value?.name || userInfo.value?.username || 'U'
+  return name.charAt(0).toUpperCase()
+})
+
+const userAvatarBg = computed(() => {
+  const name = userInfo.value?.username || 'default'
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const hue1 = Math.abs(hash) % 360
+  const hue2 = (hue1 + 40) % 360
+  return `linear-gradient(135deg, hsl(${hue1}, 85%, 65%) 0%, hsl(${hue2}, 85%, 55%) 100%)`
+})
 
 const passwordForm = ref({
   oldPassword: '',
@@ -237,17 +255,26 @@ const handleChangePassword = async () => {
 
 <style scoped>
 .navbar {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  /* 基础玻璃态与渐变微小叠加层 */
+  background: rgba(255, 255, 255, 0.55);
+  /* 以 60x60 的极简宽阔网格，辅佐一侧的流光亮斑，打造科技与极简之美，同时去除密集的波点感 */
+  background-image: 
+    linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 10% 50%, rgba(147, 51, 234, 0.05) 0%, transparent 40%);
+  background-size: 60px 60px, 60px 60px, 100% 100%;
+  background-position: 0 0, 0 0, 0 0;
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 12px 48px -12px rgba(0, 0, 0, 0.08), inset 0 -1px 0 rgba(255, 255, 255, 0.5);
   position: sticky;
   top: 0;
   z-index: 1000;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* 增加整体高度获得史诗级呼吸空间 */
 .navbar-container {
   max-width: 1440px;
   margin: 0 auto;
@@ -255,7 +282,7 @@ const handleChangePassword = async () => {
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
-  height: 64px;
+  height: 90px; /* 从 76px 进一步增大到 84px */
 }
 
 .navbar-left {
@@ -275,14 +302,20 @@ const handleChangePassword = async () => {
 }
 
 .logo-icon-wrapper {
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 8px 20px -6px rgba(79, 70, 229, 0.5), inset 0 2px 4px rgba(255,255,255,0.3);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+.logo:hover .logo-icon-wrapper {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 12px 24px -8px rgba(79, 70, 229, 0.7), inset 0 2px 4px rgba(255,255,255,0.4);
 }
 
 .logo-icon {
@@ -291,14 +324,15 @@ const handleChangePassword = async () => {
 }
 
 .logo-text {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   letter-spacing: 0.5px;
-  background: linear-gradient(to right, #1e293b, #475569);
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   font-family: 'Inter', system-ui, sans-serif;
+  transition: background 0.3s ease;
 }
 
 .navbar-center {
@@ -315,25 +349,51 @@ const handleChangePassword = async () => {
 .user-dropdown {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
-  padding: 6px 14px;
+  padding: 6px 16px 6px 6px;
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .user-dropdown:hover {
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255,255,255,1);
+  transform: translateY(-1px);
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 4px 10px -2px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .username {
   font-size: 15px;
   font-weight: 600;
   color: #1e293b;
+  letter-spacing: 0.2px;
+}
+
+.dropdown-arrow {
+  color: #94a3b8;
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.premium-dropdown-trigger[aria-expanded="true"] .dropdown-arrow {
+  transform: rotate(180deg);
 }
 
 .user-info {
@@ -366,36 +426,54 @@ const handleChangePassword = async () => {
 }
 
 :deep(.el-menu-item) {
-  height: 64px !important;
-  line-height: 64px !important;
+  height: 90px !important; /* 跟随您设置的全新 90px 导航高度对齐 */
+  line-height: 90px !important;
   padding: 0 24px !important;
   font-size: 16px !important;
   font-weight: 500 !important;
-  color: #475569 !important;
-  border-bottom: 2px solid transparent !important;
-  transition: all 0.2s ease !important;
-}
-
-:deep(.el-menu-item.is-active) {
-  color: #6366f1 !important;
+  color: #64748b !important;
+  border-bottom: none !important;
   background: transparent !important;
-  font-weight: 600 !important;
-}
-
-:deep(.el-menu-item.is-active::after) {
-  content: '';
-  position: absolute;
-  bottom: 12px;
-  left: 20px;
-  right: 20px;
-  height: 3px;
-  background: linear-gradient(to right, #6366f1, #a855f7);
-  border-radius: 3px;
+  position: relative;
+  transition: color 0.3s ease !important;
 }
 
 :deep(.el-menu-item:hover) {
-  color: #6366f1 !important;
-  background: rgba(99, 102, 241, 0.05) !important;
+  color: #0f172a !important;
+  background: transparent !important;
+}
+
+:deep(.el-menu-item.is-active) {
+  color: #4f46e5 !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+}
+
+/* 丝滑中心扩散发光下划线 */
+:deep(.el-menu-item::after) {
+  content: '';
+  position: absolute;
+  bottom: 24px; /* 适应 90px 超宽高度完美底距 */
+  left: 50%;
+  height: 4px;
+  width: 44px; /* 与大空间匹配的指示线宽 */
+  background: linear-gradient(135deg, #4f46e5, #9333ea);
+  border-radius: 4px;
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  opacity: 0;
+  box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.5);
+}
+
+:deep(.el-menu-item:hover::after) {
+  transform: translateX(-50%) scaleX(0.6);
+  opacity: 0.5;
+}
+
+:deep(.el-menu-item.is-active::after) {
+  transform: translateX(-50%) scaleX(1);
+  opacity: 1;
 }
 
 </style>

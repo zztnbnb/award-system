@@ -114,25 +114,7 @@
         </div>
       </div>
 
-      <!-- ③ 第二行图表：各年级获奖（全宽柱状图） -->
-      <div class="chart-row chart-row-1col">
-        <div class="chart-card">
-          <div class="chart-header">
-            <span class="chart-title">🎓 各年级获奖人数对比</span>
-            <span class="chart-subtitle">已通过申请 · 按年级统计</span>
-          </div>
-          <div class="chart-placeholder" :style="{ height: gradeChartHeight + 'px' }">
-            <div ref="chartGrade" class="chart-canvas"></div>
-            <div v-if="emptyGrade" class="chart-empty">
-              <span class="empty-icon">🎓</span>
-              <span class="empty-text">暂无年级获奖数据</span>
-              <span class="empty-hint">当有学生申请通过审核后自动统计</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ④ 第三行图表：申请状态 + Top10热门竞赛 -->
+      <!-- ③ 第二行图表：申请状态 + Top10热门竞赛 -->
       <div class="chart-row chart-row-2col">
         <div class="chart-card">
           <div class="chart-header">
@@ -165,8 +147,23 @@
         </div>
       </div>
 
-      <!-- ⑤ 第四行图表：月度趋势（全宽折线图） -->
-      <div class="chart-row chart-row-1col">
+      <!-- ④ 第三行图表：各年级获奖人数 + 月度申请趋势 -->
+      <div class="chart-row chart-row-2col">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">🎓 各年级获奖人数对比</span>
+            <span class="chart-subtitle">已通过申请 · 按年级统计</span>
+          </div>
+          <div class="chart-placeholder" :style="{ height: gradeChartHeight + 'px' }">
+            <div ref="chartGrade" class="chart-canvas"></div>
+            <div v-if="emptyGrade" class="chart-empty">
+              <span class="empty-icon">🎓</span>
+              <span class="empty-text">暂无年级获奖数据</span>
+              <span class="empty-hint">当有学生申请通过审核后自动统计</span>
+            </div>
+          </div>
+        </div>
+
         <div class="chart-card">
           <div class="chart-header">
             <span class="chart-title">📈 月度申请趋势</span>
@@ -242,7 +239,22 @@ function initChartAwardRank(data) {
   chartInstanceAwardRank = echarts.init(chartAwardRank.value)
 
   const RANK_MAP = { A: 'A等（最高）', B: 'B等', C: 'C等', D: 'D等' }
-  const COLORS = ['#8b5cf6', '#6366f1', '#a78bfa', '#c4b5fd']
+  
+  // 极尽丰富、区分度高的 12 色阶渐变高级色盘
+  const COLORS = [
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#6366f1' }, { offset: 1, color: '#a855f7' }]), // 1. 经典紫蓝
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#f43f5e' }, { offset: 1, color: '#fb923c' }]), // 2. 珊瑚橙红 (高对比暖色)
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#10b981' }, { offset: 1, color: '#34d399' }]), // 3. 翡翠薄荷 (清透绿)
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#0ea5e9' }, { offset: 1, color: '#38bdf8' }]), // 4. 塞班天蓝
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fbbf24' }]), // 5. 琥珀亮黄
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#ec4899' }, { offset: 1, color: '#f472b6' }]), // 6. 蜜桃魅粉
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#8b5cf6' }, { offset: 1, color: '#d946ef' }]), // 7. 赛博紫霓虹
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#14b8a6' }, { offset: 1, color: '#2dd4bf' }]), // 8. 蒂芙尼青蓝
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#ef4444' }, { offset: 1, color: '#f87171' }]), // 9. 活力火红
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#3b82f6' }, { offset: 1, color: '#60a5fa' }]), // 10. 海洋深蓝
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#84cc16' }, { offset: 1, color: '#a3e635' }]), // 11. 青柠草绿
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#64748b' }, { offset: 1, color: '#94a3b8' }])  // 12. 质感银灰 (托底色)
+  ]
 
   const seriesData = (data || []).map((item, i) => ({
     name: RANK_MAP[item.rank] || item.rank,
@@ -290,16 +302,24 @@ function initChartAwardRank(data) {
     }],
     series: [{
       type: 'pie',
-      radius: ['45%', '70%'],
+      radius: ['50%', '75%'], // 稍微变薄
       center: ['50%', '45%'],
       avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      itemStyle: { 
+        borderRadius: 10,  // 更平滑的圆角
+        borderColor: '#fff', 
+        borderWidth: 4    // 更宽的缝隙呼吸感
+      },
       label: { show: false },
       emphasis: {
         label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#1e293b' },
-        itemStyle: { shadowBlur: 16, shadowColor: 'rgba(99,102,241,0.3)' }
+        itemStyle: { 
+          shadowBlur: 20, 
+          shadowColor: 'rgba(99,102,241,0.4)',
+          transform: 'scale(1.05)'
+        }
       },
-      data: seriesData.length ? seriesData : [{ name: '暂无数据', value: 1, itemStyle: { color: '#e2e8f0' } }]
+      data: seriesData.length ? seriesData : [{ name: '暂无数据', value: 1, itemStyle: { color: '#f1f5f9' } }]
     }]
   }
   chartInstanceAwardRank.setOption(option)
@@ -313,7 +333,21 @@ function initChartCompetitionLevel(data) {
   if (chartInstanceCompetitionLevel) chartInstanceCompetitionLevel.dispose()
   chartInstanceCompetitionLevel = echarts.init(chartCompetitionLevel.value)
 
-  const COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#06b6d4', '#0ea5e9', '#3b82f6', '#10b981']
+  // 同样引用的极尽丰富、区分度高的 12 色阶渐变高级色盘
+  const COLORS = [
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#10b981' }, { offset: 1, color: '#34d399' }]), // 1. 起手翡翠薄荷 (与第一个图错开首色)
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#6366f1' }, { offset: 1, color: '#a855f7' }]), // 2. 经典紫蓝
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fbbf24' }]), // 3. 琥珀亮黄
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#f43f5e' }, { offset: 1, color: '#fb923c' }]), // 4. 珊瑚橙红
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#0ea5e9' }, { offset: 1, color: '#38bdf8' }]), // 5. 塞班天蓝
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#ec4899' }, { offset: 1, color: '#f472b6' }]), // 6. 蜜桃魅粉
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#14b8a6' }, { offset: 1, color: '#2dd4bf' }]), // 7. 蒂芙尼青蓝
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#8b5cf6' }, { offset: 1, color: '#d946ef' }]), // 8. 赛博紫霓虹
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#ef4444' }, { offset: 1, color: '#f87171' }]), // 9. 活力火红
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#3b82f6' }, { offset: 1, color: '#60a5fa' }]), // 10. 海洋深蓝
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#84cc16' }, { offset: 1, color: '#a3e635' }]), // 11. 青柠草绿
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#64748b' }, { offset: 1, color: '#94a3b8' }])  // 12. 质感银灰
+  ]
 
   const seriesData = (data || []).map((item, i) => ({
     name: item.level,
@@ -339,22 +373,43 @@ function initChartCompetitionLevel(data) {
     },
     series: [{
       type: 'pie',
-      radius: ['25%', '68%'],
-      center: ['50%', '44%'],
-      roseType: 'area',          // 南丁格尔玫瑰图
-      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
-      label: { show: false },
+      radius: ['45%', '75%'], // 调整半径制造空灵感
+      center: ['50%', '46%'],
+      itemStyle: { 
+        borderRadius: 10, // 柔和宽大的圆角
+        borderColor: '#fff', 
+        borderWidth: 4 
+      },
+      label: {
+        show: true,
+        position: 'outside',
+        formatter: '{b}\n{c} 项',
+        color: '#475569',
+        fontSize: 13,
+        fontWeight: 'bold',
+        lineHeight: 20
+      },
+      labelLine: { 
+        show: true, 
+        length: 15, 
+        length2: 12, 
+        smooth: 0.2, // 曲线化线条
+        lineStyle: { width: 1.5, type: 'dashed' } // 使用虚线牵引提升科技感
+      },
       emphasis: {
         label: {
           show: true,
-          fontSize: 13,
-          fontWeight: 'bold',
-          color: '#1e293b',
-          formatter: '{b}\n{c} 项'
+          fontSize: 14,
+          fontWeight: '900',
+          color: '#1e293b'
         },
-        itemStyle: { shadowBlur: 16, shadowColor: 'rgba(99,102,241,0.3)' }
+        itemStyle: { 
+          shadowBlur: 20, 
+          shadowColor: 'rgba(99,102,241,0.4)',
+          transform: 'scale(1.05)'
+        }
       },
-      data: seriesData.length ? seriesData : [{ name: '暂无数据', value: 1, itemStyle: { color: '#e2e8f0' } }]
+      data: seriesData.length ? seriesData : [{ name: '暂无数据', value: 1, itemStyle: { color: '#f1f5f9' } }]
     }]
   }
   chartInstanceCompetitionLevel.setOption(option)
@@ -371,7 +426,11 @@ function initChartGrade(data) {
   chartInstanceGrade = echarts.init(chartGrade.value)
 
   const sorted = [...(data || [])].sort((a, b) => String(a.grade).localeCompare(String(b.grade)))
-  const grades = sorted.map(d => d.grade + '居')
+  // 增加容错判断：如果数据库本身的 grade 数据已经包含了“级”字，则不再重复追加
+  const grades = sorted.map(d => {
+    const g = String(d.grade)
+    return g.endsWith('级') ? g : g + '级'
+  })
   const counts = sorted.map(d => Number(d.count))
 
   const option = {
@@ -383,7 +442,7 @@ function initChartGrade(data) {
       textStyle: { color: '#1e293b', fontSize: 13 },
       formatter: (params) => `${params[0].name}：<b>${params[0].value}</b> 人`
     },
-    grid: { left: 60, right: 30, top: 20, bottom: 40 },
+    grid: { left: 60, right: 30, top: 40, bottom: 40 }, // 增大 top，防止柱子上方文字标签被截断
     xAxis: {
       type: 'category',
       data: grades.length ? grades : ['暂无数据'],
@@ -400,16 +459,36 @@ function initChartGrade(data) {
     series: [{
       type: 'bar',
       data: counts.length ? counts : [0],
-      barMaxWidth: 56,
-      label: { show: true, position: 'top', color: '#6366f1', fontWeight: 700, fontSize: 14 },
+      barMaxWidth: 36, // 将柱子加厚增强体积感
+      label: { show: true, position: 'top', color: '#6366f1', fontWeight: 700, fontSize: 14, distance: 10 },
       itemStyle: {
-        borderRadius: [8, 8, 0, 0],
-        color: (p) => {
-          const colors = ['#8b5cf6', '#6366f1', '#a78bfa', '#06b6d4', '#10b981', '#f59e0b', '#ef4444']
-          return colors[p.dataIndex % colors.length]
+        borderRadius: [8, 8, 0, 0], // 底部为直角接壤地平线，仅顶部大圆角
+        color: (p) => { 
+          const BAR_COLORS = [
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#f43f5e' }, { offset: 1, color: '#fb923c' }]), // 热烈红橙
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#6366f1' }, { offset: 1, color: '#a855f7' }]), // 经典紫蓝
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#10b981' }, { offset: 1, color: '#34d399' }]), // 翡翠薄荷
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#0ea5e9' }, { offset: 1, color: '#38bdf8' }]), // 阳光天蓝
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fbbf24' }]), // 琥珀亮黄
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#ec4899' }, { offset: 1, color: '#f472b6' }]), // 蜜桃魅粉
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#14b8a6' }, { offset: 1, color: '#2dd4bf' }]), // 蒂芙尼青
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#8b5cf6' }, { offset: 1, color: '#d946ef' }]), // 赛博紫粉
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#ef4444' }, { offset: 1, color: '#f87171' }]), // 活力火红
+            new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#3b82f6' }, { offset: 1, color: '#60a5fa' }])  // 海洋深蓝
+          ]
+          return BAR_COLORS[p.dataIndex % BAR_COLORS.length]
         }
       },
-      emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(99,102,241,0.3)' } }
+      emphasis: { 
+        itemStyle: { 
+          shadowBlur: 16, 
+          shadowColor: 'rgba(99,102,241,0.4)',
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#a855f7' },
+            { offset: 1, color: '#60a5fa' }
+          ])
+        } 
+      }
     }]
   }
   chartInstanceGrade.setOption(option)
@@ -424,11 +503,11 @@ function initChartStatus(data) {
   chartInstanceStatus = echarts.init(chartStatus.value)
 
   const STATUS_MAP = {
-    pending:   { label: '待审核', color: '#f59e0b' },
-    approved:  { label: '已通过', color: '#10b981' },
-    rejected:  { label: '已拒绝', color: '#ef4444' },
-    returned:  { label: '已退回', color: '#6366f1' },
-    withdrawn: { label: '已撤回', color: '#94a3b8' }
+    pending:   { label: '待审核', color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fbbf24' }]) }, // 琥珀黄
+    approved:  { label: '已通过', color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#10b981' }, { offset: 1, color: '#34d399' }]) }, // 翡翠绿
+    rejected:  { label: '已拒绝', color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#ef4444' }, { offset: 1, color: '#f87171' }]) }, // 危险红
+    returned:  { label: '已退回', color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#6366f1' }, { offset: 1, color: '#8b5cf6' }]) }, // 柔和紫
+    withdrawn: { label: '已撤回', color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [{ offset: 0, color: '#64748b' }, { offset: 1, color: '#94a3b8' }]) }  // 极客银灰
   }
 
   const seriesData = (data || []).map(item => ({
@@ -457,16 +536,24 @@ function initChartStatus(data) {
     ],
     series: [{
       type: 'pie',
-      radius: ['45%', '70%'],
+      radius: ['50%', '75%'], // 加大半径强化呼吸感
       center: ['50%', '44%'],
       avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      itemStyle: { 
+        borderRadius: 10,   // 大圆角
+        borderColor: '#fff', 
+        borderWidth: 4     // 更宽的缝隙呼吸感
+      },
       label: { show: false },
       emphasis: {
-        label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#1e293b' },
-        itemStyle: { shadowBlur: 16, shadowColor: 'rgba(0,0,0,0.1)' }
+        label: { show: true, fontSize: 15, fontWeight: 'bold', color: '#1e293b' },
+        itemStyle: { 
+          shadowBlur: 20, 
+          shadowColor: 'rgba(0,0,0,0.15)', // 通用弥散阴影 
+          transform: 'scale(1.05)'
+        }
       },
-      data: seriesData.length ? seriesData : [{ name:'暂无数据', value:1, itemStyle:{ color:'#e2e8f0' } }]
+      data: seriesData.length ? seriesData : [{ name:'暂无数据', value:1, itemStyle:{ color:'#f1f5f9' } }]
     }]
   }
   chartInstanceStatus.setOption(option)
@@ -512,18 +599,33 @@ function initChartTop10(data) {
     series: [{
       type: 'bar',
       data: counts.length ? counts : [0],
-      barMaxWidth: 20,
-      label: { show: true, position: 'right', color: '#6366f1', fontWeight: 700, fontSize: 12 },
+      barMaxWidth: 32, // 加厚横向条带体积
+      label: { show: true, position: 'right', color: '#6366f1', fontWeight: 700, fontSize: 13, distance: 10 },
       itemStyle: {
-        borderRadius: [0, 6, 6, 0],
-        color: { type: 'linear', x:0, y:0, x2:1, y2:0,
-          colorStops: [
-            { offset: 0, color: '#a78bfa' },
-            { offset: 1, color: '#6366f1' }
+        borderRadius: [0, 8, 8, 0], // 右侧流线圆角
+        color: (p) => { // 根据排行单独上色
+          const BAR_COLORS = [
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#f43f5e' }, { offset: 1, color: '#fb923c' }]), // 热烈红橙
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#6366f1' }, { offset: 1, color: '#a855f7' }]), // 经典紫蓝
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#10b981' }, { offset: 1, color: '#34d399' }]), // 翡翠薄荷
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#0ea5e9' }, { offset: 1, color: '#38bdf8' }]), // 阳光天蓝
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fbbf24' }]), // 琥珀亮黄
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#ec4899' }, { offset: 1, color: '#f472b6' }]), // 蜜桃魅粉
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#14b8a6' }, { offset: 1, color: '#2dd4bf' }]), // 蒂芙尼青
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#8b5cf6' }, { offset: 1, color: '#d946ef' }]), // 赛博紫粉
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#ef4444' }, { offset: 1, color: '#f87171' }]), // 活力火红
+            new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#3b82f6' }, { offset: 1, color: '#60a5fa' }])  // 海洋深蓝
           ]
+          // 反向取色（让榜首，即上面的柱子最热烈），因为 ECharts bar 是从下往上画的
+          return BAR_COLORS[(counts.length - 1 - p.dataIndex) % BAR_COLORS.length]
         }
       },
-      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(99,102,241,0.3)' } }
+      emphasis: { 
+        itemStyle: { 
+          shadowBlur: 16, 
+          shadowColor: 'rgba(59, 130, 246, 0.4)'
+        } 
+      }
     }]
   }
   chartInstanceTop10.setOption(option)
