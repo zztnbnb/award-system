@@ -1,0 +1,21 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Build
+**/target/
+**/dist/
+**/node_modules/
+**/build/
+.temp/
+
+# Log
+*.log
+
+# SQL (Exclude internal backups, but keep the specific one if needed)
+# award_system_clean_v2.sql # Keep this for now as user wants to share it
+
+# OS
+.DS_Store
+Thumbs.db
