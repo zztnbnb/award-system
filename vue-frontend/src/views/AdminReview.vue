@@ -239,7 +239,7 @@
           <!-- 团队成员 -->
           <div class="premium-section" v-if="currentDetail.teamMembers && currentDetail.teamMembers.length > 0">
             <h4 class="premium-title">团队成员</h4>
-            <el-table :data="currentDetail.teamMembers" border class="premium-inner-table">
+            <el-table :data="currentDetail.teamMembers" border class="premium-inner-table member-table">
               <el-table-column type="index" label="序号" width="60" align="center" />
               <el-table-column label="学号" width="140">
                 <template #default="{ row }">{{ row.externalNumber || row.studentNumber || '-' }}</template>
@@ -265,7 +265,7 @@
           <!-- 指导教师 -->
           <div class="premium-section" v-if="currentDetail.teachers && currentDetail.teachers.length > 0">
             <h4 class="premium-title">指导教师</h4>
-            <el-table :data="currentDetail.teachers" border class="premium-inner-table">
+            <el-table :data="currentDetail.teachers" border class="premium-inner-table teacher-table">
               <el-table-column type="index" label="序号" width="60" align="center" />
               <el-table-column prop="teacherName" label="姓名" width="120" />
               <el-table-column prop="teacherNo" label="工号" width="120" />
@@ -297,17 +297,16 @@
         </div>
       </div>
       <template #footer>
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <div>
+        <div class="audit-action-bar">
+          <div class="audit-re-review" v-if="currentDetail.applicationStatus === 'approved' || currentDetail.applicationStatus === 'rejected' || currentDetail.applicationStatus === 'returned'">
             <el-button 
-              v-if="currentDetail.applicationStatus === 'approved' || currentDetail.applicationStatus === 'rejected' || currentDetail.applicationStatus === 'returned'"
               class="action-btn return-btn" 
               @click="handleReReview"
             >
               重新审核
             </el-button>
           </div>
-          <div style="display: flex; gap: 12px">
+          <div class="audit-status-btns">
             <template v-if="currentDetail.applicationStatus === 'pending'">
               <el-button class="action-btn reject-btn" @click="handleReviewSingle('rejected')">拒绝</el-button>
               <el-button class="action-btn return-btn" @click="handleReviewSingle('returned')">打回</el-button>
@@ -323,20 +322,21 @@
     <el-dialog
       v-model="previewDialogVisible"
       :title="previewFileData.fileName"
-      width="80%"
+      width="800px"
+      class="preview-dialog"
       @close="handlePreviewDialogClose"
     >
-      <div style="text-align: center; min-height: 500px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; border-radius: 8px;">
+      <div class="preview-container">
         <img 
           v-if="isPreviewImage" 
           :src="getFilePreviewUrl(previewFileData.filePath)" 
-          style="max-width: 100%; max-height: 60vh; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" 
+          class="preview-image"
           alt="预览图片" 
         />
         <iframe 
           v-else-if="previewFileData.filePath"
           :src="getFilePreviewUrl(previewFileData.filePath)"
-          style="width: 100%; height: 60vh; border: none"
+          class="preview-iframe"
         ></iframe>
       </div>
       <template #footer>
@@ -353,7 +353,7 @@ import { Search, Document, Check, Close, RefreshLeft } from '@element-plus/icons
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
 
-const API_BASE_URL = 'http://localhost:9998/api/review'
+const API_BASE_URL = 'http://10.152.224.138:9998/api/review'
 
 const loading = ref(false)
 const detailLoading = ref(false)
@@ -1316,5 +1316,211 @@ const handlePreviewDialogClose = () => {
   background: #f8fafc;
   border-radius: 8px;
   border: 1px dashed #e2e8f0;
+}
+
+/* ======= 文件预览弹窗专用 ======= */
+.preview-container {
+  text-align: center;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.preview-image {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.preview-iframe {
+  width: 100%;
+  height: 65vh;
+  border: none;
+}
+
+/* ========================================= */
+/* 📱 移动端深度适配 (AdminReview)         */
+/* ========================================= */
+@media screen and (max-width: 768px) {
+  /* 基础容器 */
+  .admin-review-page.login-wrapper-style { padding-bottom: 20px; }
+  .content-container { padding: 10px; }
+  .review-card { border-radius: 16px !important; margin-top: 10px; }
+  :deep(.review-card .el-card__body) { padding: 16px 12px; }
+
+  /* 📊 数据看板换列瀑布流 */
+  .elegant-dashboard { grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .elegant-card.primary { grid-column: 1 / -1; }
+  .elegant-card { padding: 20px 16px; border-radius: 16px; min-height: 90px; }
+  .card-num { font-size: 32px; }
+  .card-bg-icon { font-size: 80px; right: -15px; bottom: -20px; }
+
+  /* 🎛️ 筛选栏：高定级小组件化排版 */
+  .premium-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.85);
+  }
+  
+  /* 移动端由于卡片化隐藏了复选框，这里同步隐藏所有批量操作按钮 */
+  .left-actions { 
+    display: none !important;
+  }
+  
+  /* 数据计数徽标改为胶囊式，并占满宽度 */
+  .data-count-badge { 
+    width: 100%;
+    display: flex;
+    justify-content: center; 
+    padding: 10px;
+    margin-top: 0;
+    border: none;
+    background: #f8fafc;
+    border-radius: 30px;
+    box-sizing: border-box;
+  }
+  
+  .right-filters { 
+    display: flex;
+    flex-direction: column; 
+    width: 100%; 
+    gap: 12px; 
+  }
+  
+  .premium-input, .premium-select { 
+    width: 100% !important; 
+    margin: 0 !important; 
+  }
+  
+  /* 让移动端输入框胖乎乎一点，手感更好 */
+  :deep(.right-filters .el-input__wrapper) {
+    padding: 6px 15px;
+    border-radius: 10px;
+  }
+
+  /* 📑 彻底重构审核表格为“数据流卡片式” */
+  .premium-table { background: transparent !important; box-shadow: none !important; }
+  .premium-table :deep(.el-table__header-wrapper) { display: none !important; }
+  .premium-table :deep(.el-table__body-wrapper) { overflow: visible !important; }
+  .premium-table :deep(table), .premium-table :deep(tbody) { display: block; width: 100% !important; }
+  
+  .premium-table :deep(.el-table__row) {
+    display: flex !important; flex-direction: column !important;
+    width: 100%; 
+    background-color: #ffffff !important;
+    --el-table-tr-bg-color: #ffffff !important;
+    border-radius: 12px !important; margin-bottom: 16px !important;
+    padding: 12px 16px !important; box-sizing: border-box;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+  }
+  
+  /* 状态卡片：整卡高亮变色系统 */
+  .premium-table :deep(.el-table__row.row-approved) {
+    background-color: #f0fdf4 !important; /* 护眼淡绿 */
+    --el-table-tr-bg-color: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+  }
+  .premium-table :deep(.el-table__row.row-returned) {
+    background-color: #fffbeb !important; /* 温和浅黄 */
+    --el-table-tr-bg-color: #fffbeb !important;
+    border-color: #fde68a !important;
+  }
+  .premium-table :deep(.el-table__row.row-rejected) {
+    background-color: #fef2f2 !important; /* 警告淡红 */
+    --el-table-tr-bg-color: #fef2f2 !important;
+    border-color: #fecaca !important;
+  }
+
+  .premium-table :deep(.el-table__row td) { 
+    display: flex !important; width: 100% !important; padding: 4px 0 !important; 
+    border: none !important; text-align: left !important; align-items: flex-start !important; 
+    background-color: transparent !important; /* 强制透出父级的纯白，杜绝格子感 */
+  }
+  .premium-table :deep(.el-table__row td:hover), .premium-table :deep(.el-table__row--striped td) { background-color: transparent !important; }
+  .premium-table :deep(.cell) { padding: 0 !important; display: flex; width: 100%; flex-wrap: wrap; }
+
+  /* 表格卡片引导注入 */
+  .premium-table :deep(.el-table__row td:nth-child(1)) { display: none !important; } /* 多选框暂隐藏或特定处理 */
+  .premium-table :deep(.el-table__row td:nth-child(2)) { display: none !important; } /* 序号隐藏 */
+  .premium-table :deep(.el-table__row td:nth-child(3)::before) { content: "学号："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  .premium-table :deep(.el-table__row td:nth-child(4)) { font-size: 16px; font-weight: 700; color: #1e293b; padding: 8px 0 !important; border-bottom: 1px dashed #f1f5f9 !important; margin-bottom: 4px; }
+  .premium-table :deep(.el-table__row td:nth-child(4)::before) { content: "赛事："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; margin-top: 2px; }
+  .premium-table :deep(.el-table__row td:nth-child(5)::before) { content: "级别："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  .premium-table :deep(.el-table__row td:nth-child(6)::before) { content: "等次："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  .premium-table :deep(.el-table__row td:nth-child(7)::before) { content: "获奖时间："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  .premium-table :deep(.el-table__row td:nth-child(8)::before) { content: "状态："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  .premium-table :deep(.el-table__row td:nth-child(9)::before) { content: "提交时间："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+
+  /* 审核操作组 (铺满卡片底部区域) */
+  .premium-table :deep(.el-table__row td:last-child) { margin-top: 12px; padding-top: 12px !important; border-top: 1px solid #f1f5f9 !important; }
+  .premium-table :deep(.el-table__row td:last-child .cell) { justify-content: flex-end; }
+  .premium-table :deep(.action-btn-group) { width: 100%; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+  .premium-table :deep(.action-btn-group .el-button) { flex: 1 1 auto; margin-left: 0 !important; padding: 12px 16px !important; }
+
+  /* 🔍 详情审核弹窗重塑 */
+  :deep(.detail-dialog) { width: 95% !important; margin: 5vh auto !important; border-radius: 16px !important; height: auto !important; }
+  :deep(.detail-dialog .el-dialog__body) { padding: 16px !important; }
+
+  /* 🌟 详情弹窗数据项重构：iOS 风格左右分栏 */
+  :deep(.premium-desc), :deep(.premium-desc .el-descriptions__body) { border: none !important; background: transparent !important; }
+  :deep(.premium-desc .el-descriptions__body table), :deep(.premium-desc .el-descriptions__body tbody) { display: block; width: 100%; border: none !important; }
+  :deep(.premium-desc .el-descriptions__body tr) { display: grid !important; grid-template-columns: 85px 1fr; width: 100%; border: none !important; }
+  :deep(.premium-desc .el-descriptions__label), :deep(.premium-desc .el-descriptions__content), :deep(.premium-desc.is-bordered .el-descriptions__body .el-descriptions__cell) {
+    display: flex; align-items: flex-start; border: none !important; border-bottom: 1px solid #f1f5f9 !important; box-sizing: border-box; text-align: left !important; background-color: transparent !important; padding: 16px 4px !important; line-height: 1.5;
+  }
+  :deep(.premium-desc .el-descriptions__label) { color: #64748b; font-size: 14px; font-weight: 500; }
+  :deep(.premium-desc .el-descriptions__content) { color: #0f172a; font-size: 14px; font-weight: 600; }
+  :deep(.premium-desc .el-descriptions__body tr:last-child .el-descriptions__label:last-of-type), :deep(.premium-desc .el-descriptions__body tr:last-child .el-descriptions__content:last-of-type) { border-bottom: none !important; }
+
+  /* 🌟 内部团队/老师卡片流 */
+  .premium-inner-table { background: transparent !important; border: none !important; --el-table-border-color: transparent !important; --el-table-bg-color: transparent !important; }
+  .premium-inner-table :deep(.el-table__inner-wrapper::before) { display: none !important; }
+  .premium-inner-table :deep(.el-table__inner-wrapper) { background: transparent !important; }
+  .premium-inner-table :deep(.el-table__header-wrapper) { display: none !important; }
+  .premium-inner-table :deep(.el-table__body-wrapper) { overflow: visible !important; }
+  .premium-inner-table :deep(table), .premium-inner-table :deep(tbody) { display: block; width: 100% !important; }
+  .premium-inner-table :deep(.el-table__row) { display: flex !important; flex-direction: column; background: #ffffff !important; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important; }
+  .premium-inner-table :deep(.el-table__row td) { display: flex; align-items: center; padding: 6px 0 !important; border: none !important; background: transparent !important; }
+  .premium-inner-table :deep(.cell) { padding: 0 !important; display: flex; width: 100%; color: #1e293b; font-size: 14px; font-weight: 500; }
+  .premium-inner-table :deep(.el-table__row td::before) { color: #64748b; font-size: 13px; font-weight: 400; width: 65px; flex-shrink: 0; }
+
+  /* 区分配置注入 */
+  .premium-inner-table :deep(.el-table__row td:nth-child(1)) { display: none !important; }
+  .premium-inner-table :deep(.el-table__row td:nth-child(2)::before) { content: "姓名"; }
+  .premium-inner-table :deep(.el-table__row td:nth-child(3)::before) { content: "学号"; }
+
+  /* 审核底部工具栏 (审核状态与意见提交部分) */
+  .detail-footer-content { margin-top: 10px; }
+  .audit-action-bar { flex-direction: column; gap: 12px; }
+  .audit-radio-group { width: 100%; }
+  .audit-radio-group :deep(.el-radio-button) { flex: 1; }
+  .audit-radio-group :deep(.el-radio-button__inner) { width: 100%; }
+
+  /* 🖼️ 预览弹窗 */
+  :deep(.preview-dialog) { width: 95% !important; margin: 5vh auto !important; border-radius: 12px !important; }
+  :deep(.preview-dialog .el-dialog__body) { padding: 10px !important; }
+  .preview-container { min-height: 60vh; }
+  .preview-iframe { height: 70vh; }
+
+  /* 📄 底部翻页栏适配 */
+  :deep(.el-pagination) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center !important;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  :deep(.el-pagination button),
+  :deep(.el-pagination span:not([class*=suffix])),
+  :deep(.el-pagination .el-select) {
+    margin: 0 !important;
+  }
 }
 </style>

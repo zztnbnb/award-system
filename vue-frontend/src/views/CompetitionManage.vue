@@ -178,7 +178,7 @@ import { Plus, Delete, Edit, Search, Upload, Download } from '@element-plus/icon
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
 
-const API_BASE_URL = 'http://localhost:9998/api/competition-manage'
+const API_BASE_URL = 'http://10.152.224.138:9998/api/competition-manage'
 
 const loading = ref(false)
 const submitLoading = ref(false)

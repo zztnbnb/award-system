@@ -713,7 +713,7 @@ function initChartMonthly(data) {
 async function loadData() {
   loading.value = true
   try {
-    const res = await axios.get('http://localhost:9998/api/statistics/overview')
+    const res = await axios.get('http://10.152.224.138:9998/api/statistics/overview')
     rawData.value = res.data
     kpi.value = res.data.kpi || {}
     lastUpdateTime.value = formatTime()
@@ -1063,9 +1063,136 @@ onMounted(() => {
   color: #94a3b8;
 }
 
-.empty-hint {
-  font-size: 12px;
-  color: #cbd5e1;
-}
+  .empty-hint {
+    font-size: 12px;
+    color: #cbd5e1;
+  }
+  
+  /* ========================================= */
+  /* 📱 移动端深度适配 (AdminStatistics)       */
+  /* ========================================= */
+  @media screen and (max-width: 768px) {
+    /* 1. 顶部标题区紧凑组合，避免占用宝贵首屏 */
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .header-left {
+      margin-bottom: 0;
+    }
+    .header-right {
+      width: 100%;
+      justify-content: flex-start; /* 靠左排列标签和按钮 */
+      gap: 12px;
+    }
+    
+    /* 2. KPI 核心指标：高定卡片风（纵向紧缩） */
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr); 
+      gap: 12px;
+    }
+    
+    .kpi-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 14px 12px !important;
+      border-radius: 20px; 
+      border: none;        
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+      min-height: auto !important; /* 解除可能继承的 PC 端高度 */
+      gap: 0;
+    }
+    
+    /* 隐藏底纹图标 */
+    .kpi-card::before {
+      content: none;
+    }
+    
+    /* 图标组件：缩小体积并向左上靠拢 */
+    .kpi-icon-wrap {
+      width: 32px;
+      height: 32px;
+      font-size: 16px;
+      border-radius: 8px;
+      margin-bottom: 6px; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* 数值区块：保持辨识度的同时削减行高抢占的高度 */
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px; 
+    }
+    
+    /* 深层整合文字标签和徽章在一行横排 */
+    .kpi-info {
+      width: 100%;
+      display: flex;
+      flex-direction: row;     /* 强制横排 */
+      justify-content: space-between;
+      align-items: flex-end;   /* 底部对齐 */
+      margin-top: 0;           /* 去除推压 */
+    }
+    
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 0; 
+      line-height: 1.2;
+    }
+    
+    /* 胶囊徽章变得更精巧 */
+    .kpi-badge {
+      position: static;
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+    
+    /* 各图表容器降维为瀑布流单列 */
+    .chart-row-2col {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    /* 图表头部在小屏下折叠，防止主标题和副标题互相挤压 */
+    .chart-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 16px 16px 0 16px;
+    }
+    
+    .chart-title {
+      font-size: 15px;
+      line-height: 1.4;
+      white-space: normal; /* 允许折行 */
+      word-break: break-all;
+    }
+    
+    .chart-subtitle {
+      font-size: 11px;
+      align-self: flex-start; /* 将副标题固定至左侧不跟随外层干扰 */
+      margin-bottom: 4px;
+    }
+    
+    /* 适当压缩移动端图表高度防止过分拉伸，保持良好屏显比例 */
+    .chart-placeholder, .chart-placeholder-tall {
+      height: 240px !important;
+    }
+  }
 </style>
 

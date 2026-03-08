@@ -194,7 +194,7 @@
           <div class="premium-section">
             <h4 class="premium-title">指导老师</h4>
             <div v-if="currentDetail.teachers && currentDetail.teachers.length > 0">
-              <el-table :data="currentDetail.teachers" border class="premium-inner-table">
+              <el-table :data="currentDetail.teachers" border class="premium-inner-table teacher-table">
                 <el-table-column prop="teacherName" label="姓名" width="120" />
                 <el-table-column prop="teacherDepartment" label="部门" min-width="150" />
                 <el-table-column prop="teacherNo" label="工号" width="120" />
@@ -207,7 +207,7 @@
           <div class="premium-section" v-if="currentDetail.teamId || (currentDetail.teamMembers && currentDetail.teamMembers.length > 0)">
             <h4 class="premium-title">团队成员</h4>
             <div v-if="currentDetail.teamMembers && currentDetail.teamMembers.length > 0">
-              <el-table :data="currentDetail.teamMembers" border class="premium-inner-table">
+              <el-table :data="currentDetail.teamMembers" border class="premium-inner-table member-table">
                 <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
                 <el-table-column label="姓名" width="120">
                   <template #default="{ row }">{{ row.externalName || row.studentName || '-' }}</template>
@@ -265,19 +265,20 @@
       v-model="previewDialogVisible"
       :title="previewFileData.fileName"
       width="800px"
+      class="preview-dialog"
       @close="handlePreviewDialogClose"
     >
-      <div style="text-align: center; min-height: 500px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; border-radius: 8px;">
+      <div class="preview-container">
         <img 
           v-if="isPreviewImage" 
           :src="getFilePreviewUrl(previewFileData.filePath)" 
-          style="max-width: 100%; max-height: 60vh; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" 
+          class="preview-image"
           alt="预览图片" 
         />
         <iframe 
           v-else-if="previewFileData.filePath"
           :src="getFilePreviewUrl(previewFileData.filePath)"
-          style="width: 100%; height: 60vh; border: none"
+          class="preview-iframe"
         ></iframe>
       </div>
       <template #footer>
@@ -1045,6 +1046,404 @@ const handlePreviewDialogClose = () => {
   background: #f8fafc;
   border-radius: 8px;
   border: 1px dashed #e2e8f0;
+}
+
+/* ======= 文件预览弹窗专用 ======= */
+.preview-container {
+  text-align: center;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.preview-image {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.preview-iframe {
+  width: 100%;
+  height: 65vh;
+  border: none;
+}
+
+/* ========================================= */
+/* 📱 移动端深度适配 (ApplicationRecord)     */
+/* ========================================= */
+@media screen and (max-width: 768px) {
+  /* ...（保持其他已有的移动端样式）... */
+  
+  /* 🖼️ 文件预览弹窗缩放与居中 */
+  :deep(.preview-dialog) {
+    width: 95% !important; /* 强制缩短宽度，不再死守 800px */
+    margin: 5vh auto !important;
+    border-radius: 12px !important;
+  }
+  :deep(.preview-dialog .el-dialog__body) {
+    padding: 10px !important;
+  }
+  .preview-container {
+    min-height: 60vh; /* 保证有一个兜底的可观看区域 */
+  }
+  .preview-iframe {
+    height: 70vh; /* 在手机上放大 Iframe (如PDF) 的可用高度 */
+  }
+
+  /* 基础容器瘦身 */
+  .application-record-page.login-wrapper-style {
+    padding-bottom: 20px;
+  }
+  .content-container {
+    padding: 10px;
+  }
+  .record-card {
+    margin-top: 10px;
+    border-radius: 16px !important;
+  }
+  :deep(.record-card .el-card__body) {
+    padding: 16px 12px;
+  }
+
+  /* 表头：文字与新建按钮的距离 */
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .premium-btn {
+    width: 100%;
+    padding: 14px 20px !important;
+  }
+
+  /* 📊 数据看板：摒弃挤压的 5 列，改用优雅的瀑布流/网格 */
+  .elegant-dashboard {
+    grid-template-columns: 1fr 1fr; /* 平分两列 */
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  /* 让“总申请数”横跨独占首行，彰显重要性 */
+  .elegant-card.primary {
+    grid-column: 1 / -1; 
+  }
+  .elegant-card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+  .card-num {
+    font-size: 32px; /* 字体略作收缩防溢出 */
+  }
+  .card-bg-icon {
+    font-size: 90px;
+    right: -15px;
+    bottom: -20px;
+  }
+
+  /* 🎛️ 筛选栏：上下折叠并铺满 */
+  .premium-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  .premium-filter-bar .el-input {
+    width: 100% !important; /* 强制撑开搜索框 */
+  }
+  /* 处理太长的单选项：允许折行 */
+  .premium-filter-bar :deep(.el-radio-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: transparent;
+    padding: 0;
+  }
+  .premium-filter-bar :deep(.el-radio-button) {
+    flex: 1 1 calc(33.333% - 4px); /* 大致三分之一，紧凑排列 */
+    min-width: 70px;
+  }
+  .premium-filter-bar :deep(.el-radio-button__inner) {
+    width: 100%;
+    padding: 8px 0;
+    font-size: 13px;
+    background: rgba(241, 245, 249, 0.6);
+  }
+
+  /* 📑 彻底重构表格为“数据流卡片式”展示 */
+  .premium-table {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  
+  /* 隐藏传统的表头 */
+  .premium-table :deep(.el-table__header-wrapper) {
+    display: none !important;
+  }
+  
+  /* 解除表格默认包裹限制，改为纵向卡片流 */
+  .premium-table :deep(.el-table__body-wrapper) {
+    overflow: visible !important;
+  }
+  .premium-table :deep(table),
+  .premium-table :deep(tbody) {
+    display: block;
+    width: 100% !important;
+  }
+  
+  /* 每一行表格 变身 独立卡片 */
+  .premium-table :deep(.el-table__row) {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100%;
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+    padding: 12px 16px !important;
+    box-sizing: border-box;
+  }
+  
+  /* 卡片的悬浮效果 */
+  :deep(.premium-table .el-table__row:hover) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 12px -3px rgba(99, 102, 241, 0.1) !important;
+  }
+  
+  /* 彻底剥离单元格传统的边框与间距 */
+  .premium-table :deep(.el-table__row td) {
+    display: flex !important;
+    width: 100% !important;
+    padding: 6px 0 !important;
+    border: none !important;
+    text-align: left !important;
+    align-items: flex-start !important; /* 顶部对齐以适应换行数据 */
+  }
+  
+  /* 干掉伪类及多余的背景色，保障底色清爽 */
+  .premium-table :deep(.el-table__row td:hover),
+  .premium-table :deep(.el-table__row--striped td) {
+    background-color: transparent !important;
+  }
+  .premium-table :deep(.cell) {
+    padding: 0 !important;
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap; /* 允许内部元素换行 */
+  }
+
+  /* 制造卡片内键值对 (Key-Value) 的视觉排版，利用 CSS Content 插入伪表头 */
+  /* 第1列：序号 (隐藏或弱化) */
+  .premium-table :deep(.el-table__row td:nth-child(1)) {
+    display: none !important; 
+  }
+  
+  /* 第2列：竞赛类型 */
+  .premium-table :deep(.el-table__row td:nth-child(2)::before) { content: "类型："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  /* 第3列：竞赛名称 */
+  .premium-table :deep(.el-table__row td:nth-child(3)) {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    padding: 8px 0 !important;
+    border-bottom: 1px dashed #f1f5f9 !important;
+    margin-bottom: 4px;
+  }
+  .premium-table :deep(.el-table__row td:nth-child(3)::before) { content: "赛事："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; margin-top: 2px; }
+  
+  /* 第4列：项目名称 */
+  .premium-table :deep(.el-table__row td:nth-child(4)::before) { content: "项目："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  
+  /* 第5列：竞赛级别 */
+  .premium-table :deep(.el-table__row td:nth-child(5)::before) { content: "级别："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  
+  /* 第6列：获奖等次 */
+  .premium-table :deep(.el-table__row td:nth-child(6)::before) { content: "等次："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  
+  /* 第7列：申请状态 */
+  .premium-table :deep(.el-table__row td:nth-child(7)::before) { content: "状态："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  
+  /* 第8列：提交时间 */
+  .premium-table :deep(.el-table__row td:nth-child(8)::before) { content: "时间："; color: #94a3b8; font-size: 13px; font-weight: 500; min-width: 70px; }
+  
+  /* 第9列：操作栏 (解绑固定布局，放平拉宽) */
+  .premium-table :deep(.el-table__row td:last-child) {
+    margin-top: 8px;
+    padding-top: 12px !important;
+    border-top: 1px solid #f1f5f9 !important;
+  }
+  .premium-table :deep(.el-table__row td:last-child .cell) {
+    justify-content: flex-end; /* 整体容器向右倾斜 */
+  }
+  .premium-table :deep(.action-btn-group) {
+    width: auto;
+    display: flex;
+    justify-content: flex-end; /* 小巧按键右侧结缘 */
+    gap: 16px; /* 留出清晰的物理按压间距 */
+  }
+  .premium-table :deep(.action-btn-group .el-button) {
+    flex: none; /* 拒绝暴力撑满 */
+    padding: 10px 16px !important;
+    margin-left: 0 !important;
+  }
+  
+  /* 🔍 详情弹窗重塑 */
+  :deep(.premium-dialog) {
+    width: 95% !important;
+    margin: 5vh auto !important;
+    border-radius: 16px !important;
+    height: auto !important;
+  }
+  :deep(.premium-dialog .el-dialog__body) {
+    padding: 16px !important;
+  }
+  
+  /* 🌟 详情弹窗数据项重构：iOS 风格左右分栏网络 */
+  :deep(.premium-desc),
+  :deep(.premium-desc .el-descriptions__body) {
+    border: none !important;
+    background: transparent !important;
+  }
+  
+  :deep(.premium-desc .el-descriptions__body table),
+  :deep(.premium-desc .el-descriptions__body tbody) {
+    display: block;
+    width: 100%;
+    border: none !important;
+  }
+
+  :deep(.premium-desc .el-descriptions__body tr) {
+    display: grid !important;
+    grid-template-columns: 85px 1fr; /* 左侧标签固定宽度，右侧自适应 */
+    width: 100%;
+    border: none !important;
+  }
+
+  :deep(.premium-desc .el-descriptions__label),
+  :deep(.premium-desc .el-descriptions__content),
+  :deep(.premium-desc.is-bordered .el-descriptions__body .el-descriptions__cell) {
+    display: flex;
+    align-items: flex-start; /* 应对多行文本顶部对齐 */
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important; /* 柔和的下划线分隔 */
+    box-sizing: border-box;
+    text-align: left !important;
+    background-color: transparent !important;
+    padding: 16px 4px !important;
+    line-height: 1.5;
+  }
+
+  :deep(.premium-desc .el-descriptions__label) {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  :deep(.premium-desc .el-descriptions__content) {
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  /* 去除最后一行的底边线 */
+  :deep(.premium-desc .el-descriptions__body tr:last-child .el-descriptions__label:last-of-type),
+  :deep(.premium-desc .el-descriptions__body tr:last-child .el-descriptions__content:last-of-type) {
+    border-bottom: none !important;
+  }
+
+  /* 🌟 详情弹窗：内部团队成员与指导老师表格重构为精致卡片流 */
+  .premium-inner-table {
+    background: transparent !important;
+    border: none !important;
+    --el-table-border-color: transparent !important; /* 切断 Element 表格边框变量 */
+    --el-table-bg-color: transparent !important;
+  }
+  
+  /* 破除外层包裹的冗余白边和阴影 */
+  .premium-inner-table :deep(.el-table__inner-wrapper::before) {
+    display: none !important;
+  }
+  .premium-inner-table :deep(.el-table__inner-wrapper) {
+    background: transparent !important;
+  }
+  
+  .premium-inner-table :deep(.el-table__header-wrapper) {
+    display: none !important;
+  }
+  .premium-inner-table :deep(.el-table__body-wrapper) {
+    overflow: visible !important;
+  }
+  .premium-inner-table :deep(table),
+  .premium-inner-table :deep(tbody) {
+    display: block;
+    width: 100% !important;
+  }
+  .premium-inner-table :deep(.el-table__row) {
+    display: flex !important;
+    flex-direction: column;
+    background: #ffffff !important; /* 改为纯白底以彰显通透质感 */
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
+  }
+  .premium-inner-table :deep(.el-table__row td) {
+    display: flex;
+    align-items: center; /* 使用垂直居中增强单行信息的连贯性 */
+    padding: 6px 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+  .premium-inner-table :deep(.cell) {
+    padding: 0 !important;
+    display: flex;
+    width: 100%;
+    color: #1e293b;
+    font-size: 14px; /* 字体略微放大使其更加易读 */
+    font-weight: 500;
+  }
+  
+  /* 给所有注入伪类设置一致的高级排版 */
+  .premium-inner-table :deep(.el-table__row td::before) {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 400;
+    width: 65px;
+    flex-shrink: 0;
+  }
+
+  /* 为不同列注入引导文字 (团队成员列) */
+  .premium-inner-table.member-table :deep(.el-table__row td:nth-child(1)) { display: none !important; }
+  .premium-inner-table.member-table :deep(.el-table__row td:nth-child(2)::before) { content: "姓名"; }
+  .premium-inner-table.member-table :deep(.el-table__row td:nth-child(3)::before) { content: "学号"; }
+  .premium-inner-table.member-table :deep(.el-table__row td:nth-child(4)::before) { content: "学院"; }
+  .premium-inner-table.member-table :deep(.el-table__row td:nth-child(5)::before) { content: "学校"; }
+  .premium-inner-table.member-table :deep(.el-table__row td:nth-child(6)) { 
+    margin-top: 8px; 
+    border-top: 1px dashed #f1f5f9 !important; 
+    padding-top: 12px !important; 
+  }
+  .premium-inner-table.member-table :deep(.el-table__row td:nth-child(6) .cell) { justify-content: flex-end; }
+
+  /* 为不同列注入引导文字 (指导老师列) */
+  .premium-inner-table.teacher-table :deep(.el-table__row td:nth-child(1)::before) { content: "姓名"; }
+  .premium-inner-table.teacher-table :deep(.el-table__row td:nth-child(2)::before) { content: "部门"; }
+  .premium-inner-table.teacher-table :deep(.el-table__row td:nth-child(3)::before) { content: "工号"; }
+  
+  /* 文件项响应式微调 */
+  .premium-file-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .premium-file-item .action-btn {
+    width: 100%;
+  }
 }
 </style>
 ```

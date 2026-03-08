@@ -47,11 +47,11 @@
                 </div>
               </template>
               
-              <div class="competition-select-trigger" style="display: flex; width: 100%; gap: 10px;">
+              <div class="competition-select-trigger mobile-stack">
                 <el-select 
                   v-model="formData.competitionName" 
                   placeholder="在此直接选择常见赛事，或点击右侧搜索" 
-                  style="flex: 1;"
+                  class="flex-1-select"
                   clearable
                   filterable
                   allow-create
@@ -69,7 +69,7 @@
                   class="premium-search-btn"
                   @click="openCompetitionDialog"
                 >
-                  <el-icon style="margin-right: 4px;"><Search /></el-icon> 搜索赛事
+                  <el-icon style="margin-right: 4px;"><Search /></el-icon> <span class="search-btn-text">搜索赛事</span>
                 </el-button>
               </div>
             </el-form-item>
@@ -93,7 +93,7 @@
             </el-form-item>
             
             <el-row :gutter="20">
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item label="竞赛级别" prop="competitionLevel">
                   <el-select v-model="formData.competitionLevel" placeholder="请选择" style="width: 100%">
                     <el-option label="国家级" value="国家级" />
@@ -103,7 +103,7 @@
                   </el-select>
                 </el-form-item>
               </el-col>
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item label="获奖等次" prop="awardRank">
                   <el-input 
                     v-model="formData.awardRank" 
@@ -116,12 +116,12 @@
             </el-row>
             
             <el-row :gutter="20">
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item label="获奖等级" prop="awardLevel">
                   <el-input v-model="formData.awardLevel" placeholder="如：金奖/一等奖/M奖" />
                 </el-form-item>
               </el-col>
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item label="获奖时间" prop="awardTime">
                   <el-date-picker
                     v-model="formData.awardTime"
@@ -559,8 +559,7 @@
       class="custom-competition-dialog"
       :show-close="false"
       width="680px"
-      top="8vh"
-      align-center
+      top="5vh"
     >
       <template #header="{ close }">
         <div class="dialog-custom-header">
@@ -1638,8 +1637,15 @@ const handleReset = () => {
 /* 小段控制器风格 */
 .custom-radio-group-small {
   background: rgba(255, 255, 255, 0.6);
-  padding: 2px;
+  padding: 3px;
   border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  display: flex;
+}
+
+:deep(.custom-radio-group-small .el-radio-button) {
+  flex: 1; /* 让内部按钮等分 */
 }
 
 :deep(.custom-radio-group-small .el-radio-button__inner) {
@@ -1649,12 +1655,29 @@ const handleReset = () => {
   color: #64748b;
   font-weight: 600;
   box-shadow: none !important;
+  width: 100%;
+  padding: 6px 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :deep(.custom-radio-group-small .el-radio-button__original-radio:checked + .el-radio-button__inner) {
   background: #ffffff;
   color: #6366f1;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 移动端提示横条特调 */
+@media screen and (max-width: 768px) {
+  .member-instruction-row {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 12px;
+    padding: 14px 16px !important;
+  }
+  
+  .custom-radio-group-small {
+    width: 100%;
+  }
 }
 
 .empty-tip {
@@ -2050,8 +2073,236 @@ const handleReset = () => {
   background: #f8fafc !important;
 }
 
+.competition-select-trigger {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+}
+.flex-1-select {
+  flex: 1;
+}
 
-</style>
+/* ================= Mobile Responsive Tweaks ================= */
+@media screen and (max-width: 768px) {
+  /* 表单标签上方显示 */
+  :deep(.el-form-item) {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    margin-bottom: 24px !important;
+  }
+  
+  :deep(.el-form-item__label) {
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    margin-bottom: 8px !important;
+    padding-right: 0 !important;
+    line-height: 1.2 !important;
+  }
+  
+  :deep(.el-form-item__content) {
+    width: 100% !important;
+  }
+
+  /* 赛事名称输入框和按钮的堆叠 */
+  .competition-select-trigger.mobile-stack {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px !important;
+  }
+  
+  .competition-select-trigger.mobile-stack .flex-1-select,
+  .competition-select-trigger.mobile-stack .premium-search-btn {
+    width: 100% !important;
+  }
+
+  .premium-submit-btn,
+  .premium-reset-btn {
+    width: 100%;
+    padding: 12px 0 !important;
+    margin-left: 0 !important; /* 清除 Element Plus 相邻按钮默认增加的 12px 左间距 */
+  }
+  
+  :deep(.submit-action-row .el-form-item__content) {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* 导师及成员卡片自适应缩放 */
+  .glass-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    position: relative;
+  }
+  
+  .glass-card .info-item {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .glass-card .el-button {
+    width: 100%;
+    margin-top: 8px;
+    margin-left: 0;
+  }
+
+  .drag-handle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+  
+  .mentor-title, .member-title {
+    margin-bottom: 8px;
+  }
+
+  /* 移动端弹窗宽度重写 */
+  :deep(.custom-competition-dialog),
+  :deep(.custom-mini-dialog) {
+    width: 95% !important;
+    margin: 0 auto !important;
+  }
+  
+  .dialog-search-area {
+    padding: 12px 16px;
+  }
+  
+  .competition-list-container {
+    padding: 12px 16px;
+  }
+
+  /* 表头与类型切换按钮移动端换行平铺，精简下方间距 */
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 16px;
+  }
+  
+  :deep(.el-card__header) {
+    padding-bottom: 12px;
+    border-bottom: none; /* 去除双重横线 */
+  }
+  
+  .premium-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* 保留自定横线即可 */
+    padding-bottom: 16px;
+    margin-bottom: 0; /* 抹平之前预留给 PC 的多余边距 */
+  }
+  
+  :deep(.form-card .el-card__body) {
+    padding-top: 10px; /* 拉近与头部的贴合感 */
+  }
+  
+  .application-form {
+    margin-top: 10px !important; /* 去除原本 30px 的巨大的表单顶部推远距离 */
+  }
+  
+  .form-section {
+    padding: 20px 16px !important; /* 缩小桌面端硕大的白盒子内边距 (原本32px) */
+    margin-bottom: 20px !important;
+  }
+  
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .custom-radio-group {
+    display: flex;
+    width: 100%;
+  }
+  
+  :deep(.header-actions .el-radio-button) {
+    flex: 1;
+    display: flex;
+  }
+  
+  :deep(.header-actions .el-radio-button__inner) {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 0 !important;
+  }
+  
+  .card-header h2 {
+    font-size: 20px;
+  }
+  
+  /* ================= 针对弹窗 (赛事搜索等) 的移动端极端优化 ================= */
+  
+  :deep(.custom-competition-dialog),
+  :deep(.custom-mini-dialog) {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    width: 95% !important;
+    margin: 5vh auto !important; /* 不用 align-center，改用手动距顶 */
+    height: auto !important;
+  }
+  
+  :deep(.custom-competition-dialog .el-dialog__header),
+  :deep(.custom-mini-dialog .el-dialog__header) {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  :deep(.custom-competition-dialog .el-dialog__body),
+  :deep(.custom-mini-dialog .el-dialog__body) {
+    padding: 0 !important; /* 彻底清除移动端自带的导致挤压的巨大留白 */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .dialog-body-content {
+    /* 随下方列表自然延伸高度，不要无限撑开 */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .dialog-custom-header {
+    padding: 14px 18px !important;
+  }
+  .header-title {
+    font-size: 16px !important;
+  }
+  
+  .dialog-search-area {
+    padding: 16px 18px !important; /* 增加搜索区边距增加呼吸感 */
+  }
+  
+  .header-search-input .el-input-group__append {
+    padding: 0 16px !important; /* 缩小追加按钮在手机下的左右边距避免挤压 */
+    font-size: 14px !important;
+  }
+  
+  .competition-list-container {
+    padding: 12px 16px !important;
+    max-height: 52vh !important; /* 允许列表更高 */
+  }
+  
+  .competition-card {
+    padding: 12px 14px !important;
+    font-size: 14px !important;
+  }
+  .comp-card-name {
+    font-size: 14px !important;
+  }
+  .comp-card-tag {
+    padding: 2px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  .dialog-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px !important;
+  }
+  .dialog-footer .el-button {
+    flex: 1;
+    margin: 0 4px !important;
+    padding: 10px 0 !important;
+  }
+}
 
 /* ================= Custom Competition Selector Dialog ================= */
 <style>

@@ -3,6 +3,7 @@ package com.example.common;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 /**
  * Web 配置类
@@ -20,5 +21,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(staticMappingPath);
+    }
+
+    @Override
+    public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }

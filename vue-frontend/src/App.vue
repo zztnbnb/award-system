@@ -139,4 +139,34 @@ body {
   position: relative;
   z-index: 10;
 }
+
+/* ====== 移动端全局适配媒体查询 ====== */
+@media screen and (max-width: 768px) {
+  /* 减小背景漂浮物尺寸，避免在移动端显得过大 */
+  .blob-1 {
+    width: 60vw; height: 60vw;
+  }
+  .blob-2 {
+    width: 70vw; height: 70vw;
+  }
+  .blob-3 {
+    width: 50vw; height: 50vw;
+  }
+
+  /* 移动端全局卡片间距和边距优化 
+     使用 :deep() 穿透但由于是全局非scoped可以直写，
+     降低默认的 20px padding 到更适合手机的尺寸 */
+  .el-card__body {
+    padding: 16px !important;
+  }
+  .el-card__header {
+    padding: 12px 16px !important;
+  }
+  
+  /* 为了防止页面出现横向滚动条，强制加上 max-width */
+  body {
+    overflow-x: hidden;
+    width: 100vw;
+  }
+}
 </style>

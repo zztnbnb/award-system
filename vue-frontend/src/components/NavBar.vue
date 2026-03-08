@@ -10,7 +10,7 @@
         </div>
       </div>
       
-      <div class="navbar-center">
+      <div class="navbar-center desktop-menu">
         <el-menu
           :default-active="activeMenu"
           mode="horizontal"
@@ -70,6 +70,11 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
+        
+        <!-- 移动端汉堡菜单按钮 -->
+        <div class="mobile-menu-btn" @click="drawerVisible = true">
+          <el-icon><Expand /></el-icon>
+        </div>
       </div>
     </div>
     
@@ -98,6 +103,59 @@
         <el-button type="primary" @click="handleChangePassword">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 移动端侧边抽屉菜单 -->
+    <el-drawer
+      v-model="drawerVisible"
+      direction="rtl"
+      size="240px"
+      append-to-body
+      :with-header="false"
+      class="mobile-drawer"
+    >
+      <div class="drawer-header">
+        <div class="logo-icon-wrapper">
+          <el-icon class="logo-icon"><Trophy /></el-icon>
+        </div>
+        <span class="logo-text">获奖系统</span>
+      </div>
+      <el-menu
+        :default-active="activeMenu"
+        class="mobile-el-menu"
+        @select="handleMobileMenuSelect"
+      >
+        <el-menu-item index="/student/award" v-if="hasRole('student')">
+          <div class="mobile-menu-inner">
+            <span class="mobile-menu-text">申请填写</span>
+          </div>
+        </el-menu-item>
+        <el-menu-item index="/student/record" v-if="hasRole('student')">
+          <div class="mobile-menu-inner">
+            <span class="mobile-menu-text">申请记录</span>
+          </div>
+        </el-menu-item>
+        <el-menu-item index="/admin/review" v-if="hasRole('admin') || hasRole('mentor')">
+          <div class="mobile-menu-inner">
+            <span class="mobile-menu-text">审核管理</span>
+          </div>
+        </el-menu-item>
+        <el-menu-item index="/admin/statistics" v-if="hasRole('admin') || hasRole('mentor')">
+          <div class="mobile-menu-inner">
+            <span class="mobile-menu-text">数据统计</span>
+          </div>
+        </el-menu-item>
+        <el-menu-item index="/admin/competition" v-if="hasRole('admin') || hasRole('mentor')">
+          <div class="mobile-menu-inner">
+            <span class="mobile-menu-text">竞赛管理</span>
+          </div>
+        </el-menu-item>
+        <el-menu-item index="/admin/student" v-if="hasRole('admin') || hasRole('mentor')">
+          <div class="mobile-menu-inner">
+            <span class="mobile-menu-text">学生管理</span>
+          </div>
+        </el-menu-item>
+      </el-menu>
+    </el-drawer>
   </div>
 </template>
 
@@ -106,7 +164,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../utils/request'
-import { Trophy, User, ArrowDown, Lock, SwitchButton } from '@element-plus/icons-vue'
+import { Trophy, User, ArrowDown, Lock, SwitchButton, Expand } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -115,6 +173,12 @@ const userInfo = ref(null)
 const activeMenu = ref('')
 const passwordDialogVisible = ref(false)
 const passwordFormRef = ref(null)
+const drawerVisible = ref(false)
+
+const handleMobileMenuSelect = (index) => {
+  drawerVisible.value = false
+  router.push(index)
+}
 
 const userInitial = computed(() => {
   const name = userInfo.value?.name || userInfo.value?.username || 'U'
@@ -344,6 +408,178 @@ const handleChangePassword = async () => {
 
 .navbar-right {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: #1e293b;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-btn:active {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(0.95);
+}
+
+/* 抽屉样式 */
+.drawer-header {
+  padding: 24px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  margin-bottom: 10px;
+}
+.drawer-header .logo-text {
+  font-size: 18px;
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+/* 抽屉弹出层底层修复，解决层叠背景污染与卡顿 */
+:global(.mobile-drawer),
+:global(.mobile-drawer .el-drawer),
+:global(.mobile-drawer .el-drawer__body),
+:global(.mobile-drawer .el-drawer__header) {
+  background: #f8fafc !important; /* 强制使用不透明纯色替代渐变和玻璃态，彻底消灭渲染重叠 */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:global(.mobile-drawer.el-drawer__wrapper) {
+  background-color: rgba(0, 0, 0, 0.4) !important; /* 加深蒙版遮挡底部 */
+}
+
+.mobile-el-menu {
+  border-right: none !important;
+  background: transparent !important;
+}
+
+/* 彻底覆盖和接管 el-menu-item 的原生布局 */
+:deep(.mobile-el-menu .el-menu-item) {
+  height: auto !important;
+  line-height: normal !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+:deep(.mobile-el-menu .el-menu-item.is-active) {
+  background: transparent !important;
+}
+
+/* 移除原生伪类 */
+:deep(.mobile-el-menu .el-menu-item::after),
+:deep(.mobile-el-menu .el-menu-item::before) {
+  display: none !important;
+}
+
+/* 用自定义盒子接管所有的交互视觉和排版 */
+.mobile-menu-inner {
+  width: calc(100% - 32px);
+  margin: 8px 16px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+:deep(.mobile-el-menu .el-menu-item:hover) .mobile-menu-inner {
+  background: rgba(241, 245, 249, 0.8);
+  color: #0f172a;
+}
+
+:deep(.mobile-el-menu .el-menu-item.is-active) .mobile-menu-inner {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(147, 51, 234, 0.04) 100%);
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.mobile-menu-text {
+  position: relative;
+  display: inline-block;
+}
+
+/* 自定义底部划线，纯粹依附于文本盒子内部居中 */
+.mobile-menu-text::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  height: 3px;
+  width: 24px;
+  background: linear-gradient(90deg, #4f46e5, #9333ea);
+  border-radius: 3px;
+  transition: transform 0.3s ease;
+}
+
+:deep(.mobile-el-menu .el-menu-item:hover) .mobile-menu-text::after {
+  transform: translateX(-50%) scaleX(0.5);
+}
+
+:deep(.mobile-el-menu .el-menu-item.is-active) .mobile-menu-text::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+/* 响应式媒体查询 */
+@media screen and (max-width: 768px) {
+  .desktop-menu {
+    display: none !important;
+  }
+  
+  .mobile-menu-btn {
+    display: flex;
+  }
+  
+  .navbar-container {
+    padding: 0 16px;
+    height: 64px;
+  }
+  
+  .logo-text {
+    font-size: 18px;
+  }
+  
+  .logo-icon-wrapper {
+    width: 32px;
+    height: 32px;
+  }
+  .logo-icon {
+    font-size: 18px;
+  }
+  
+  .username {
+    display: none;
+  }
+  .user-dropdown {
+    padding: 4px;
+  }
+  
+  :deep(.el-menu-item) {
+    height: 64px !important;
+    line-height: 64px !important;
+  }
 }
 
 .user-dropdown {
