@@ -63,10 +63,12 @@
               type="danger" 
               :icon="Delete" 
               @click="handleBatchDelete"
+              class="desktop-only"
             >
               批量删除
             </el-button>
             <el-upload
+              class="desktop-only"
               action=""
               :show-file-list="false"
               :before-upload="handleImport"
@@ -74,8 +76,10 @@
             >
               <el-button :icon="Upload">批量导入</el-button>
             </el-upload>
-            <el-button :icon="Download" @click="handleExport">批量导出</el-button>
-            <el-button type="warning" @click="handleResetPassword">重置学生密码</el-button>
+            <el-button class="desktop-only" :icon="Download" @click="handleExport">批量导出</el-button>
+            <el-button type="warning" @click="handleResetPassword" :icon="Refresh">
+              重置学生密码
+            </el-button>
           </div>
           <div class="right-filters">
             <el-input
@@ -120,6 +124,7 @@
           v-loading="loading"
           style="width: 100%"
           @selection-change="handleSelectionChange"
+          :row-class-name="studentRowClassName"
         >
           <el-table-column type="selection" width="55" align="center" />
           <el-table-column type="index" label="序号" width="80" align="center" />
@@ -129,7 +134,7 @@
           <el-table-column prop="major" label="专业" min-width="180" show-overflow-tooltip />
           <el-table-column prop="className" label="班级" min-width="260" show-overflow-tooltip />
           <el-table-column prop="college" label="学院" min-width="200" show-overflow-tooltip />
-          <el-table-column label="操作" width="180" align="center" fixed="right">
+          <el-table-column label="操作" width="180" align="center">
             <template #default="{ row }">
               <el-button 
                 type="primary" 
@@ -152,16 +157,19 @@
         </el-table>
 
         <!-- 分页 -->
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handlePageChange"
-          style="margin-top: 20px; justify-content: flex-end"
-        />
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="pagination.page"
+            v-model:page-size="pagination.pageSize"
+            :page-sizes="[20, 50, 100]"
+            :total="pagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="handleSizeChange"
+            @current-change="handlePageChange"
+            :pager-count="5"
+            style="margin-top: 20px; justify-content: flex-end"
+          />
+        </div>
       </el-card>
     </div>
 
@@ -330,7 +338,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Delete, Edit, Search, Upload, Download } from '@element-plus/icons-vue'
+import { Plus, Delete, Edit, Search, Upload, Download, Refresh } from '@element-plus/icons-vue'
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
 
@@ -372,7 +380,45 @@ const clearClassFilter = () => {
   handleSearch()
 }
 
+
 const selectedIds = ref([])
+
+const handleSelectionChange = (selection) => {
+  selectedIds.value = selection.map(item => item.studentId)
+}
+
+const handleBatchDelete = () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择要删除的学生')
+    return
+  }
+  ElMessageBox.confirm(
+    `确定要删除选中的 ${selectedIds.value.length} 名学生吗？此操作不可恢复！`,
+    '批量删除警告',
+    { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+  ).then(async () => {
+    try {
+      await axios.delete(`${API_BASE_URL}/batch-delete`, { data: selectedIds.value })
+      ElMessage.success('批量删除成功')
+      handleSearch()
+    } catch (error) {
+      ElMessage.error('批量删除失败')
+    }
+  })
+}
+
+const handleImport = async (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  try {
+    const response = await axios.post(`${API_BASE_URL}/import`, formData)
+    ElMessage.success(`导入成功: ${response.data.message || '操作完成'}`)
+    handleSearch()
+  } catch (error) {
+    ElMessage.error('导入失败: ' + (error.response?.data?.error || '请检查模板格式'))
+  }
+  return false
+}
 
 // 动态计算年级列表（基于后端返回的实际有数据的年级统计数据）
 const dynamicGradeOptions = computed(() => {
@@ -512,30 +558,7 @@ const handleDelete = (row) => {
   }).catch(() => {})
 }
 
-const handleBatchDelete = () => {
-  if (selectedIds.value.length === 0) {
-    ElMessage.warning('请先选择要删除的学生')
-    return
-  }
-  
-  ElMessageBox.confirm(`确定要删除选中的 ${selectedIds.value.length} 个学生吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    try {
-      await axios.delete(`${API_BASE_URL}/batch-delete`, {
-        data: selectedIds.value
-      })
-      ElMessage.success('批量删除成功')
-      selectedIds.value = []
-      loadStatistics()
-      loadStudentList()
-    } catch (error) {
-      ElMessage.error(error.response?.data?.error || '批量删除失败')
-    }
-  }).catch(() => {})
-}
+
 
 const handleSubmit = async () => {
   if (!formRef.value) return
@@ -585,9 +608,7 @@ const handleSizeChange = (pageSize) => {
   loadStudentList()
 }
 
-const handleSelectionChange = (selection) => {
-  selectedIds.value = selection.map(item => item.studentId)
-}
+
 
 const handleDialogClose = () => {
   if (formRef.value) {
@@ -603,39 +624,18 @@ const handleDialogClose = () => {
   formData.college = ''
 }
 
-const handleImport = async (file) => {
-  const formData = new FormData()
-  formData.append('file', file)
-  
-  loading.value = true
-  try {
-    const response = await axios.post(`${API_BASE_URL}/import`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-    
-    const result = response.data
-    if (result.errorCount > 0) {
-      ElMessageBox.alert(
-        `成功导入 ${result.successCount} 条，失败 ${result.errorCount} 条\n错误信息：\n${result.errors.join('\n')}`,
-        '导入结果',
-        { confirmButtonText: '确定' }
-      )
-    } else {
-      ElMessage.success(`成功导入 ${result.successCount} 条数据`)
-    }
-    
-    loadStatistics()
-    loadStudentList()
-  } catch (error) {
-    ElMessage.error(error.response?.data?.error || '导入失败')
-  } finally {
-    loading.value = false
+// 动态计算行的渐变色主题类名
+const studentRowClassName = ({ row, rowIndex }) => {
+  // 如果没有年级，就按下标循环给一个伪随机色
+  if (!row.grade) {
+    return `theme-grade-${(rowIndex % 4) + 1}`
   }
-  
-  return false
+  // 根据"23级"中的数字进行稳定的哈希
+  const num = parseInt(row.grade.replace(/[^0-9]/g, '')) || rowIndex
+  return `theme-grade-${(num % 4) + 1}`
 }
+
+
 
 const handleExport = async () => {
   try {
@@ -1214,7 +1214,470 @@ const handleResetPasswordDialogClose = () => {
   box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
   font-weight: bold;
 }
-</style>
+
+/* =========================================================
+   📱 终极响应式适配 - Student.vue 移动端高定降维重塑
+   ========================================================= */
+@media screen and (max-width: 768px) {
+  /* 🪟 1. 全局容器极简释放 - 取消左右无意义留白与双层卡片底色 */
+  .content-container {
+    padding: 0 !important;
+  }
+  .manage-card {
+    margin-top: 0;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  :deep(.manage-card > .el-card__header) {
+    padding: 12px 16px;
+    border-bottom: none !important; /* 取消自带的分割线 */
+  }
+  :deep(.manage-card > .el-card__body) {
+    padding: 0 12px 12px 12px !important; /* 顶部压缩，左右保留安全边距 */
+  }
+
+  /* 📊 2. 顶级数据看板 (首行独占 + 次行 2x2 网格) */
+  .advanced-statistics-bar {
+    display: grid !important; /* 致命修正：强行转网格以承载下面的 column 分配 */
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+  .advanced-stat-card.theme-total {
+    grid-column: 1 / -1; /* 第一张“总数”卡横跨两列独占一行 */
+    min-height: 90px;
+  }
+  .advanced-stat-card {
+    min-height: 85px;
+    padding: 16px 12px;
+    flex: auto !important; /* 解除原有弹性计算 */
+    max-width: none !important;
+    min-width: 0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important; /* 卡片本身补充阴影 */
+  }
+  .stat-label {
+    font-size: 13px;
+  }
+  .stat-value {
+    font-size: 26px;
+  }
+
+  /* 🎛️ 3. 灵动操作栏精简堆叠 */
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  
+  /* 隐藏大而无当的统计文字和桌面专属按钮 */
+  .right-filters > span,
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* 操作按钮组两两并排，圆角微距矩形高级光感 */
+  .left-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto auto; /* 允许换行，重置密码按钮独占一行 */
+    gap: 12px;
+    width: 100%;
+  }
+
+  .left-actions .el-button {
+    height: 38px;
+    border-radius: 10px !important;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 !important;
+    width: 100%;
+    border: none !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+  }
+  
+
+
+  /* 搜索及过滤栏紧凑化 */
+  .right-filters {
+    display: flex;
+    flex-wrap: wrap; /* 允许跨行折叠 */
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+  }
+  .right-filters > .el-input {
+    width: 100% !important; /* 搜索框霸占一整行 */
+    margin-right: 0 !important;
+  }
+  .right-filters > .el-button,
+  .right-filters > .el-select {
+    flex: 1; /* 班级、年级下拉框平分一行 */
+    margin-right: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* 💳 4. 重磅：将原生表格降维重构为“工业级严谨网格”版 */
+  :deep(.el-table),
+  :deep(.el-table__inner-wrapper),
+  :deep(.el-table__body-wrapper),
+  :deep(.el-table__body),
+  :deep(table),
+  :deep(.el-table tbody),
+  :deep(.el-scrollbar__view),
+  :deep(.el-scrollbar__wrap) {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  :deep(.el-table td.el-table__cell) {
+    display: flex !important;
+    align-items: center !important; /* 核心：强制所有行内元素垂直居中对齐 */
+    box-sizing: border-box !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+  
+  :deep(.el-table__header-wrapper),
+  :deep(.el-table colgroup) {
+    display: none !important;
+  }
+
+  /* 行变卡片：采用严格的对齐网格逻辑 */
+  :deep(.el-table__row) {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border-radius: 12px;
+    margin-bottom: 12px; 
+    padding: 16px 14px 14px 14px !important;
+    border: 1px solid #eef2f6;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  /* 复选框 - 依旧悬浮独立 */
+  :deep(.el-table td.el-table__cell:nth-child(1)) {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: auto !important;
+    z-index: 10;
+  }
+
+  /* ---------------------------------
+     第一排：学号(3) + 姓名(4) - 字体统一化
+     --------------------------------- */
+  :deep(.el-table td.el-table__cell:nth-child(3)) {
+    width: 52% !important; 
+    order: 1;
+    margin-bottom: 12px;
+  }
+  :deep(.el-table td.el-table__cell:nth-child(3) .cell) {
+    font-size: 14px; 
+    color: #64748b;
+    /* 移除 monospace，回归系统统一字体 */
+    font-family: inherit; 
+    font-weight: 400 !important;
+  }
+  
+  :deep(.el-table td.el-table__cell:nth-child(4)) {
+    width: 48% !important; 
+    order: 2;
+    margin-bottom: 12px;
+    padding-left: 4px !important;
+  }
+  :deep(.el-table td.el-table__cell:nth-child(4) .cell) {
+    font-size: 18px; 
+    font-weight: 900 !important; /* 姓名保持最粗，形成视觉重心 */
+    color: #0f172a; /* 极深蓝黑 */
+    line-height: 1;
+  }
+
+  /* ---------------------------------
+     第二排：专业(6) + 年级(5) - 背景纯化
+     --------------------------------- */
+  :deep(.el-table td.el-table__cell:nth-child(6)) {
+    width: 52% !important;
+    order: 3;
+    margin-bottom: 10px;
+  }
+  
+  :deep(.el-table td.el-table__cell:nth-child(5)) {
+    width: 48% !important;
+    order: 4;
+    margin-bottom: 10px;
+    padding-left: 4px !important;
+  }
+  :deep(.el-table td.el-table__cell:nth-child(5) .cell) {
+    font-size: 12px;
+    font-weight: 400 !important;
+    padding: 0 !important; /* 移除内边距 */
+    background: transparent !important; /* 移除背景框 */
+    color: #64748b;
+    letter-spacing: 0.5px;
+  }
+
+  /* ---------------------------------
+     第三排：班级(7) + 学院(8) - 取消加粗
+     --------------------------------- */
+  :deep(.el-table td.el-table__cell:nth-child(7)) {
+    width: 52% !important;
+    order: 5;
+    margin-bottom: 4px;
+  }
+  
+  :deep(.el-table td.el-table__cell:nth-child(8)) {
+    width: 48% !important;
+    order: 6;
+    margin-bottom: 4px;
+    padding-left: 4px !important;
+  }
+
+  /* 单元格通用：强化非加粗设定 & 移除条目虚线 */
+  :deep(.el-table td.el-table__cell .cell) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    font-size: 13.5px;
+    color: #475569;
+    font-weight: 400 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-bottom: none !important; /* 移除底下白框/分割线 */
+    padding-bottom: 0 !important;
+  }
+  
+  :deep(.el-table td.el-table__cell:nth-child(6) .cell::before),
+  :deep(.el-table td.el-table__cell:nth-child(7) .cell::before),
+  :deep(.el-table td.el-table__cell:nth-child(8) .cell::before) { 
+    font-size: 13px; width: 22px; display: inline-block; opacity: 0.8;
+  }
+
+
+  /* ---------------------------------
+     第 4 排：操作栏(9)
+     --------------------------------- */
+  :deep(.el-table td.el-table__cell:nth-child(9)) {
+    width: 100% !important;
+    order: 7;
+    margin-top: 6px;
+    padding-top: 14px !important;
+    border-top: 1px dashed rgba(226, 232, 240, 0.6) !important;
+    display: block !important;
+  }
+  
+  :deep(.el-table td.el-table__cell:nth-child(9) .cell) {
+    display: flex;
+    gap: 12px;
+  }
+  
+  :deep(.el-table td.el-table__cell:nth-child(9) .el-button) {
+    flex: 1; 
+    height: 40px;
+    border-radius: 10px;
+    font-weight: 500; /* 适度降权，不加粗但保持清晰 */
+    border: none !important;
+  }
+  
+  /* 隐藏多余项 */
+  :deep(.el-table td.el-table__cell:nth-child(2)) { display: none !important; }
+  
+  :deep(.el-table .cell) {
+    padding: 0 !important;
+    width: 100% !important;
+    overflow: visible;
+  }
+  :deep(.el-table td.el-table__cell:nth-child(9) .cell) {
+    display: flex;
+    gap: 12px;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  /* 按钮质感重塑 - 引入 Apple 风格的毛玻璃填涂 */
+  :deep(.el-table td.el-table__cell:nth-child(9) .el-button) {
+    flex: 1; 
+    height: 42px; /* 增加点击舒适度 */
+    margin: 0 !important;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    border: none !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* 编辑按钮 - 琉璃蓝 */
+  :deep(.el-table td.el-table__cell:nth-child(9) .el-button--primary) {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.15) 100%) !important;
+    color: #6366f1 !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+  }
+  
+  /* 删除按钮 - 琉璃红 */
+  :deep(.el-table td.el-table__cell:nth-child(9) .el-button--danger) {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.08) 0%, rgba(244, 63, 94, 0.12) 100%) !important;
+    color: #f43f5e !important;
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.08);
+  }
+
+  /* 点击时的轻微缩放回弹动效 */
+  :deep(.el-table td.el-table__cell:nth-child(9) .el-button:active) {
+    transform: scale(0.96);
+    filter: brightness(0.9);
+  }
+  
+  /* 消除表格默认内容的占位符外溢 */
+  :deep(.el-table .cell) {
+    padding: 0 !important;
+    width: 100% !important;
+    overflow: visible;
+  }
+
+  /* 📑 5. 分页器神还原：绝不换行的紫晶单排 */
+  .pagination-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -10px; /* 补偿外层的 padding，让滑动域最大化 */
+    padding: 0 10px;
+    scrollbar-width: none;
+  }
+  .pagination-container::-webkit-scrollbar {
+    display: none;
+  }
+  :deep(.el-pagination) {
+    display: flex;
+    flex-wrap: nowrap !important; 
+    justify-content: center !important;
+    align-items: center;
+    padding: 16px 8px 24px 8px;
+    gap: 6px; 
+    max-width: 100%;
+    box-sizing: border-box;
+    background: transparent;
+  }
+  
+  :deep(.el-pagination__total),
+  :deep(.el-pagination__sizes),
+  :deep(.el-pagination__jump) {
+    display: none !important; /* 斩首所有冗余下拉 */
+  }
+
+  :deep(.el-pagination button),
+  :deep(.el-pagination .el-pager li) {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-radius: 10px;
+    height: 36px !important;
+    min-width: 36px !important;
+    line-height: 34px !important;
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569 !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-sizing: border-box !important;
+  }
+
+  :deep(.el-pagination .el-pager li.is-active) {
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important; /* 防坍塌神技 */
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+    font-weight: 800;
+  }
+
+  /* =============================================
+     💬 弹窗移动端适配：宽度、表单、按钮全方位优化
+     ============================================= */
+
+  /* 1. 所有弹窗宽度改为 95% 屏幕宽，防止溢出 */
+  :deep(.el-dialog) {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 5vh auto !important;
+    border-radius: 16px !important;
+  }
+  :deep(.el-dialog__header) {
+    padding: 16px 20px 12px !important;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  :deep(.el-dialog__title) {
+    font-size: 17px !important;
+    font-weight: 700 !important;
+  }
+  :deep(.el-dialog__body) {
+    padding: 16px 16px 8px !important;
+  }
+
+  /* 2. 表单字段：label 上移为顶对齐，缩小 label 宽度 */
+  :deep(.el-form-item) {
+    margin-bottom: 14px !important;
+    flex-direction: column !important;
+  }
+  :deep(.el-form-item__label) {
+    width: auto !important;
+    text-align: left !important;
+    line-height: 1.4 !important;
+    padding-bottom: 4px !important;
+    font-size: 13px !important;
+    color: #64748b !important;
+  }
+  :deep(.el-form-item__content) {
+    margin-left: 0 !important;
+  }
+
+  /* 3. 底部操作按钮：撑满全宽，高度适合拇指点击 */
+  :deep(.el-dialog__footer) {
+    padding: 12px 16px 16px !important;
+    border-top: 1px solid #f1f5f9;
+  }
+  :deep(.el-dialog__footer .el-button) {
+    flex: 1 !important;
+    height: 44px !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+  }
+  :deep(.el-dialog__footer .el-button + .el-button) {
+    margin-left: 10px !important;
+  }
+
+  /* 4. 班级选择弹窗内的按钮列表优化 */
+  .class-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 4px 0;
+    max-height: 55vh !important;
+  }
+  .class-list .el-button {
+    flex: 1 1 calc(50% - 5px) !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    white-space: normal !important;
+    word-break: break-all !important;
+  }
+
+}
+
 
 <style>
 /* ====== 全局或弹出层日历美化 (强视觉冲击版) ====== */

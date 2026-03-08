@@ -54,10 +54,12 @@
               type="danger" 
               :icon="Delete" 
               @click="handleBatchDelete"
+              class="desktop-only"
             >
               批量删除
             </el-button>
             <el-upload
+              class="desktop-only"
               action=""
               :show-file-list="false"
               :before-upload="handleImport"
@@ -65,7 +67,7 @@
             >
               <el-button :icon="Upload">批量导入</el-button>
             </el-upload>
-            <el-button :icon="Download" @click="handleExport">批量导出</el-button>
+            <el-button class="desktop-only" :icon="Download" @click="handleExport">批量导出</el-button>
           </div>
           <el-input
             v-model="searchKeyword"
@@ -84,6 +86,7 @@
           v-loading="loading"
           style="width: 100%"
           @selection-change="handleSelectionChange"
+          :row-class-name="tableRowClassName"
         >
           <el-table-column type="selection" width="55" align="center" />
           <el-table-column type="index" label="序号" width="80" align="center" />
@@ -124,6 +127,7 @@
           layout="total, sizes, prev, pager, next, jumper"
           @size-change="handleSizeChange"
           @current-change="handlePageChange"
+          :pager-count="5"
           style="margin-top: 20px; justify-content: flex-end"
         />
       </el-card>
@@ -369,6 +373,11 @@ const handleSizeChange = (pageSize) => {
 
 const handleSelectionChange = (selection) => {
   selectedIds.value = selection.map(item => item.competitionId)
+}
+
+const tableRowClassName = ({ row }) => {
+  if (!row.awardRank) return ''
+  return `rank-${row.awardRank.toLowerCase()}`
 }
 
 const handleDialogClose = () => {
@@ -962,8 +971,13 @@ const getAwardRankType = (rank) => {
     gap: 10px;
     width: 100%;
   }
+
+  /* 手机端隐藏桌面专属按钮（批量删除、批量导入、批量导出） */
+  .desktop-only {
+    display: none !important;
+  }
   
-  /* 让两个主操作按钮占据一半，相对次要的操作按钮也均分位置，呈现统一按键质感 */
+  /* 让剩余操作按钮占据一半，呈现统一按键质感 */
   .left-actions > .el-button,
   .left-actions > .el-upload {
     flex: 1 1 calc(50% - 10px); /* 每个差不多占手机一半宽 */
@@ -1013,30 +1027,70 @@ const getAwardRankType = (rank) => {
     flex-direction: column !important;
     width: 100% !important;
     position: relative;
+    
+    /* 定义动态气泡与卡片的基准主色调，默认为原先的高级蓝紫 */
+    --card-theme-color: #818cf8;
+    --card-theme-bg: rgba(238, 242, 255, 0.9);
+    --card-theme-shadow: rgba(99, 102, 241, 0.12);
+    --card-theme-text: #4f46e5;
+    --card-glow-shadow: rgba(99, 102, 241, 0.08);
+
     /* 采用更清透、更有呼吸感的空气质感渐变 */
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(246, 248, 255, 0.8) 100%) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 20px !important; /* 进一步增大圆角，贴合顶级现代APP风格 */
-    padding: 24px 20px 20px 24px !important; /* 顶部留白增加，让 A 标签不再顶天立地 */
+    border-radius: 20px !important;
+    padding: 24px 20px 20px 24px !important;
     margin-bottom: 20px !important;
-    /* 引入带有弥散光感的三层阴影体系，模拟真实悬浮光线 */
+    
+    /* 引入带有弥散光感的三层阴影体系，由动态变量控制光晕色 */
     box-shadow: 
-      0 10px 30px -5px rgba(99, 102, 241, 0.08), 
+      0 10px 30px -5px var(--card-glow-shadow), 
       0 4px 12px -2px rgba(0, 0, 0, 0.04),
       inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
     transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-    /* 弱化左侧边栏，改为优雅的强调光影边框 */
+    
+    /* 侧边栏与高光边界联动动态主题色 */
     border: 1px solid rgba(255, 255, 255, 0.6) !important;
-    border-left: 5px solid #818cf8 !important; /* 更柔和的高级浅紫蓝 */
+    border-left: 5px solid var(--card-theme-color) !important; 
     --el-table-tr-bg-color: transparent !important;
     box-sizing: border-box;
+  }
+
+  /* 💎 动态层级注入：精准匹配上方四大指标卡的渐变基调与光感 */
+  :deep(.el-table__row.rank-a) {
+    --card-theme-color: #f43f5e; /* 玫瑰红 */
+    --card-theme-bg: rgba(255, 241, 242, 0.9);
+    --card-theme-shadow: rgba(244, 63, 94, 0.15);
+    --card-theme-text: #e11d48;
+    --card-glow-shadow: rgba(244, 63, 94, 0.08);
+  }
+  :deep(.el-table__row.rank-b) {
+    --card-theme-color: #f97316; /* 橙金 */
+    --card-theme-bg: rgba(255, 247, 237, 0.9);
+    --card-theme-shadow: rgba(249, 115, 22, 0.15);
+    --card-theme-text: #c2410c;
+    --card-glow-shadow: rgba(249, 115, 22, 0.08);
+  }
+  :deep(.el-table__row.rank-c) {
+    --card-theme-color: #eab308; /* 琉璃黄 */
+    --card-theme-bg: rgba(254, 252, 232, 0.9);
+    --card-theme-shadow: rgba(234, 179, 8, 0.15);
+    --card-theme-text: #a16207;
+    --card-glow-shadow: rgba(234, 179, 8, 0.08);
+  }
+  :deep(.el-table__row.rank-d) {
+    --card-theme-color: #22c55e; /* 翡翠绿 */
+    --card-theme-bg: rgba(240, 253, 244, 0.9);
+    --card-theme-shadow: rgba(34, 197, 94, 0.15);
+    --card-theme-text: #15803d;
+    --card-glow-shadow: rgba(34, 197, 94, 0.08);
   }
 
   :deep(.el-table__row:active) {
     transform: scale(0.975);
     box-shadow: 
-      0 4px 10px -2px rgba(99, 102, 241, 0.1), 
+      0 4px 10px -2px var(--card-theme-shadow), 
       inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
   }
 
@@ -1087,17 +1141,18 @@ const getAwardRankType = (rank) => {
     border-radius: 8px;
     letter-spacing: 0.5px;
     border: none;
-    background: linear-gradient(135deg, rgba(238, 242, 255, 0.9), rgba(224, 231, 255, 0.5));
-    color: #4f46e5;
-    box-shadow: 0 3px 10px rgba(99, 102, 241, 0.12), inset 0 1px 1px rgba(255,255,255,0.8);
+    /* 核心修复：彻底接入动态主题色管道，跟随整卡变色 */
+    background: var(--card-theme-bg);
+    color: var(--card-theme-text);
+    box-shadow: 0 3px 10px var(--card-glow-shadow), inset 0 1px 1px rgba(255,255,255,0.8);
   }
 
   /* -- 第 3 列：竞赛名称 (空灵且不失稳重的标题重心) */
   :deep(.el-table td.el-table__cell:nth-child(3)) {
     order: 2;
-    font-size: 17px; /* 字体加大，增强重量级 */
-    font-weight: 800;
-    color: #0f172a;
+    font-size: 16px; /* 字体稍微收敛一点，配合取消加粗 */
+    font-weight: 500; /* 取消超粗体，改为具有墨水感的中等字重 */
+    color: #1e293b;
     margin-bottom: 24px;
     padding-right: 36px !important; /* 给右上角多留出一点空间防碰撞 */
     line-height: 1.5;
@@ -1156,20 +1211,115 @@ const getAwardRankType = (rank) => {
     width: 100% !important;
   }
 
-  /* 📑 4. 分页器弹性包裹防溢出 */
+  /* 📑 4. 移动端专属分页器深度美化 (极简高定风) */
   :deep(.el-pagination) {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap !important; /* 不准再换行！强制保持一字长蛇阵 */
     justify-content: center !important;
-    gap: 10px;
-    padding: 10px 0;
+    align-items: center;
+    padding: 16px 8px 24px 8px;
+    margin-top: 10px;
+    gap: 6px; /* 间距拉小一点点 */
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto; /* 给极致小屏(如 iPhone SE) 保留一丝丝最后的滑动尊严(隐藏滚动条) */
+    -webkit-overflow-scrolling: touch;
   }
-  :deep(.el-pagination button),
-  :deep(.el-pagination span:not([class*=suffix])),
+  
+  /* 隐藏滚动条让它像原生横滑区一样干净 */
+  :deep(.el-pagination)::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* 隐藏在手机端冗余的统计与跳转信息，只保留最核心的页码列 */
+  :deep(.el-pagination__total),
+  :deep(.el-pagination__sizes),
+  :deep(.el-pagination__jump) {
+    display: none !important;
+  }
+
+  /* 上下页按钮基础形态优化 */
+  :deep(.el-pagination button) {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-radius: 10px;
+    height: 36px !important;
+    min-width: 36px !important;
+    color: #64748b !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    transition: all 0.2s ease;
+    box-sizing: border-box !important;
+  }
+  
+  /* 常规页码块水晶化 */
+  :deep(.el-pagination .el-pager li) {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-radius: 10px;
+    height: 36px !important;
+    min-width: 36px !important;
+    line-height: 34px !important; /* 减去边框修正行高，避免文字偏下 */
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569 !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-sizing: border-box !important;
+  }
+
+  /* 活动页码（当前页）终极高光光效：与上方新增按钮光泽呼应的高级蓝紫渐变 */
+  :deep(.el-pagination .el-pager li.is-active) {
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%) !important;
+    color: #ffffff !important;
+    /* 核心修复：用透明边框占位，永远不要取消它的边框导致盒模型坍塌尺寸不一致 */
+    border: 1px solid transparent !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+    font-weight: 800;
+  }
   :deep(.el-pagination .el-select) {
     margin: 0 !important;
   }
   
+  /* 移动端操作按钮组精简与高定化 */
+  :deep(.filter-bar .left-actions) {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 12px;
+  }
+  
+  :deep(.filter-bar .left-actions .el-button) {
+    flex: 1; /* 均分可用宽度 */
+    height: 38px;
+    margin: 0 !important;
+    border-radius: 10px !important; /* 拒绝药丸圆角，使用克制的微圆矩形 */
+    font-size: 14px;
+    font-weight: 700;
+    border: none !important;
+    letter-spacing: 0.5px;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* 顶部新增竞赛：莹润透光蓝 */
+  :deep(.filter-bar .left-actions .el-button--primary) {
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+  }
+  :deep(.filter-bar .left-actions .el-button--primary:active) {
+    transform: scale(0.96);
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2) !important;
+  }
+
+  /* 顶部批量删除：晶透玫瑰红 */
+  :deep(.filter-bar .left-actions .el-button--danger) {
+    background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+  }
+  :deep(.filter-bar .left-actions .el-button--danger:active) {
+    transform: scale(0.96);
+    box-shadow: 0 2px 6px rgba(244, 63, 94, 0.2) !important;
+  }
+
   /* 🪟 5. 弹窗自适应优化 */
   :deep(.el-dialog) {
     width: 90% !important;
