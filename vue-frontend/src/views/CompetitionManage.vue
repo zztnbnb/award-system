@@ -840,4 +840,340 @@ const getAwardRankType = (rank) => {
   box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
   font-weight: bold;
 }
+
+/* ========================================= */
+/* 📱 移动端深度适配 (CompetitionManage)       */
+/* ========================================= */
+@media screen and (max-width: 768px) {
+  /* 外层容器边距 */
+  .content-container {
+    padding: 12px;
+  }
+  
+  /* 卡片主容器消除刚硬边框 */
+  :deep(.manage-card) {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  }
+  :deep(.manage-card .el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px dashed rgba(226, 232, 240, 0.6);
+  }
+  .card-header h2 {
+    font-size: 20px;
+  }
+
+  /* 💎 1. 顶部五联指标卡片：从横向滑动改为 1大 + 4小 的稳重宫格组合 */
+  .premium-dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 分两列 */
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 0;
+  }
+
+  .elegant-card {
+    height: auto;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 竞赛总数（第一个）作为核心统率全宽，呈现开阔的大长方形 */
+  .elegant-card.total {
+    grid-column: 1 / -1;
+    flex-direction: row;        /* 主卡片内部横向排布 */
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(129, 140, 248, 0.15) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+  }
+
+  .elegant-card.total .card-content {
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .elegant-card.total .card-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  
+  .elegant-card.total .card-num {
+    font-size: 42px;
+  }
+
+  /* 子级别赛事（A/B/C/D）成为 2x2 精致小方块 */
+  .elegant-card:not(.total) {
+    padding: 14px 16px;
+  }
+
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    opacity: 0.85;
+    font-weight: 600;
+  }
+  
+  .card-num {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  
+  /* 🎛️ 2. 操作与搜索栏：从左右冲突改为上下分层的高定工具栏 */
+  .filter-bar {
+    display: flex;
+    flex-direction: column-reverse; /* 搜索框重要性更高，在手机端将其置顶 */
+    align-items: stretch;           /* 让内部元素左右撑满 */
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 0;
+  }
+
+  /* 搜索框独占一行，变身大圆角胶囊 */
+  .filter-bar > .el-input {
+    width: 100% !important;
+  }
+  .filter-bar :deep(.el-input__wrapper) {
+    border-radius: 12px;
+    padding: 8px 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  }
+
+  /* 四大操作按钮改为 2x2 网格并排拼图，或者灵活换行 */
+  .left-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+  }
+  
+  /* 让两个主操作按钮占据一半，相对次要的操作按钮也均分位置，呈现统一按键质感 */
+  .left-actions > .el-button,
+  .left-actions > .el-upload {
+    flex: 1 1 calc(50% - 10px); /* 每个差不多占手机一半宽 */
+    margin: 0 !important;      /* 去掉 Element 自带的紧凑横向间距 */
+  }
+  
+  .left-actions > .el-upload .el-button {
+    width: 100%;
+  }
+
+  /* 📄 3. 核心大杀器：表格转为“精美卡片流”（Card Stream） */
+  
+  /* 隐藏传统的表头和底部边框 */
+  :deep(.el-table__header-wrapper) {
+    display: none !important;
+  }
+  :deep(.el-table__inner-wrapper::before) {
+    display: none !important;
+  }
+  
+  /* 为了体现卡片独立性，将外层设为全透明 */
+  :deep(.el-table) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important; 
+    margin-top: 0;
+  }
+
+  /* 每一行 `tr` 就是一个圆润漂亮的白金数据卡片 */
+  :deep(.el-table__body-wrapper) {
+    background: transparent !important;
+  }
+  
+  /* 必须摧毁深层 table 渲染模式，否则宽度会缩水成一条棍子 */
+  :deep(.el-table__body), 
+  :deep(tbody) {
+    display: block !important;
+    width: 100% !important;
+  }
+  
+  :deep(colgroup) {
+    display: none !important;
+  }
+  
+  :deep(.el-table__row) {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    position: relative;
+    /* 采用更清透、更有呼吸感的空气质感渐变 */
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(246, 248, 255, 0.8) 100%) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px !important; /* 进一步增大圆角，贴合顶级现代APP风格 */
+    padding: 24px 20px 20px 24px !important; /* 顶部留白增加，让 A 标签不再顶天立地 */
+    margin-bottom: 20px !important;
+    /* 引入带有弥散光感的三层阴影体系，模拟真实悬浮光线 */
+    box-shadow: 
+      0 10px 30px -5px rgba(99, 102, 241, 0.08), 
+      0 4px 12px -2px rgba(0, 0, 0, 0.04),
+      inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* 弱化左侧边栏，改为优雅的强调光影边框 */
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    border-left: 5px solid #818cf8 !important; /* 更柔和的高级浅紫蓝 */
+    --el-table-tr-bg-color: transparent !important;
+    box-sizing: border-box;
+  }
+
+  :deep(.el-table__row:active) {
+    transform: scale(0.975);
+    box-shadow: 
+      0 4px 10px -2px rgba(99, 102, 241, 0.1), 
+      inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+  }
+
+  /* 处理每个单元格 td */
+  :deep(.el-table td.el-table__cell) {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* -- 第 1 列：复选框 (沉稳安静的右上角点缀) */
+  :deep(.el-table td.el-table__cell:nth-child(1)) {
+    position: absolute;
+    top: 24px; /* 下沉一点，与左侧放大的 A 标签中心对齐 */
+    right: 20px;
+    width: auto !important;
+    z-index: 5;
+  }
+  
+  /* -- 第 2 列：序号 (隐藏) */
+  :deep(.el-table td.el-table__cell:nth-child(2)) {
+    display: none !important;
+  }
+  
+  /* -- 第 4 列：等次徽章 (极简有力的顶级标签展示) */
+  :deep(.el-table td.el-table__cell:nth-child(4)) {
+    order: 1;
+    margin-bottom: 16px; /* 进一步拉开与下方标题的距离，让呼吸感更强 */
+  }
+  :deep(.el-table td.el-table__cell:nth-child(4) .cell) {
+    display: flex;
+    justify-content: flex-start !important;
+    align-items: center; /* 解决高宽挤压问题 */
+  }
+  /* 为不同等级动态赋予自带弥散外发光的微渐变小水晶牌 */
+  :deep(.el-table td.el-table__cell:nth-child(4) .el-tag) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px; /* 字号再稍微调大，更像独立的业务 Icon */
+    font-weight: 900;
+    height: 28px; /* 强制高度，解决压扁拉伸 */
+    padding: 0 14px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    border: none;
+    background: linear-gradient(135deg, rgba(238, 242, 255, 0.9), rgba(224, 231, 255, 0.5));
+    color: #4f46e5;
+    box-shadow: 0 3px 10px rgba(99, 102, 241, 0.12), inset 0 1px 1px rgba(255,255,255,0.8);
+  }
+
+  /* -- 第 3 列：竞赛名称 (空灵且不失稳重的标题重心) */
+  :deep(.el-table td.el-table__cell:nth-child(3)) {
+    order: 2;
+    font-size: 17px; /* 字体加大，增强重量级 */
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 24px;
+    padding-right: 36px !important; /* 给右上角多留出一点空间防碰撞 */
+    line-height: 1.5;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+  }
+  
+  /* -- 第 5 列：操作按钮组 (全方位重造：打造有呼吸感的高亮磨砂按键) */
+  :deep(.el-table td.el-table__cell:nth-child(5)) {
+    order: 3;
+  }
+  :deep(.el-table td.el-table__cell:nth-child(5) .cell) {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 12px;
+  }
+  
+  /* 基础按钮底座：剥离所有生硬边框与深色填充 */
+  :deep(.el-table td.el-table__cell:nth-child(5) .el-button) {
+    margin: 0 !important;
+    flex: 1;
+    border-radius: 12px;
+    height: 40px;
+    font-size: 14px;
+    font-weight: 700;
+    border: none !important;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  
+  /* 💡 编辑按钮：琉璃荧光蓝（极透背景 + 主题文字 + 同色系微光） */
+  :deep(.el-table td.el-table__cell:nth-child(5) .el-button--primary) {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(129, 140, 248, 0.08) 100%) !important;
+    color: #4f46e5 !important;
+    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.1) !important;
+  }
+  :deep(.el-table td.el-table__cell:nth-child(5) .el-button--primary:active) {
+    background: rgba(99, 102, 241, 0.2) !important;
+  }
+
+  /* 🚫 删除按钮：水樱蔷薇红（极透背景 + 危险文字 + 同色系微光） */
+  :deep(.el-table td.el-table__cell:nth-child(5) .el-button--danger) {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(251, 113, 133, 0.06) 100%) !important;
+    color: #e11d48 !important;
+    box-shadow: inset 0 0 0 1px rgba(244, 63, 94, 0.1) !important;
+  }
+  :deep(.el-table td.el-table__cell:nth-child(5) .el-button--danger:active) {
+    background: rgba(244, 63, 94, 0.2) !important;
+  }
+
+  /* 消除单元格默认的 cell 左右 padding，使其完全受外部 flex 支配 */
+  :deep(.el-table .cell) {
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* 📑 4. 分页器弹性包裹防溢出 */
+  :deep(.el-pagination) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center !important;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  :deep(.el-pagination button),
+  :deep(.el-pagination span:not([class*=suffix])),
+  :deep(.el-pagination .el-select) {
+    margin: 0 !important;
+  }
+  
+  /* 🪟 5. 弹窗自适应优化 */
+  :deep(.el-dialog) {
+    width: 90% !important;
+    border-radius: 16px !important;
+  }
+}
 </style>
