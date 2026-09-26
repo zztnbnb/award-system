@@ -653,7 +653,7 @@ function initChartMonthly(data) {
     legend: {
       top: 4, right: 12,
       textStyle: { color: '#64748b', fontSize: 12 },
-      data: ['机毛申请数', '通过数']
+       data: ['总申请数', '通过数']
     },
     grid: { left: 50, right: 20, top: 36, bottom: 30 },
     xAxis: {
@@ -713,7 +713,7 @@ function initChartMonthly(data) {
 async function loadData() {
   loading.value = true
   try {
-    const res = await axios.get('http://10.152.224.138:9998/api/statistics/overview')
+    const res = await axios.get('http://localhost:9998/api/statistics/overview')
     rawData.value = res.data
     kpi.value = res.data.kpi || {}
     lastUpdateTime.value = formatTime()
@@ -1195,4 +1195,3 @@ onMounted(() => {
     }
   }
 </style>
-

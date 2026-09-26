@@ -4,6 +4,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import com.example.auth.AuthInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Web 配置类
@@ -11,6 +14,16 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private AuthInterceptor authInterceptor;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(authInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns("/user/login", "/error");
+    }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

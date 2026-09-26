@@ -353,7 +353,7 @@ import { Search, Document, Check, Close, RefreshLeft } from '@element-plus/icons
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
 
-const API_BASE_URL = 'http://10.152.224.138:9998/api/review'
+const API_BASE_URL = 'http://localhost:9998/api/review'
 
 const loading = ref(false)
 const detailLoading = ref(false)
@@ -382,7 +382,8 @@ const applicationList = ref([])
 const currentDetail = ref({})
 const previewFileData = reactive({
   fileName: '',
-  filePath: ''
+  filePath: '',
+  previewUrl: ''
 })
 
 const statusTextMap = {
@@ -696,9 +697,17 @@ const isPreviewImage = computed(() => {
   return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext);
 });
 
-const handlePreviewFile = (file) => {
+const handlePreviewFile = async (file) => {
   previewFileData.fileName = file.fileName
   previewFileData.filePath = file.filePath
+  if (previewFileData.previewUrl) URL.revokeObjectURL(previewFileData.previewUrl)
+  try {
+    const response = await axios.get(`http://localhost:9998${file.filePath}`, { responseType: 'blob' })
+    previewFileData.previewUrl = URL.createObjectURL(response.data)
+  } catch (error) {
+    ElMessage.error('附件加载失败')
+    return
+  }
   previewDialogVisible.value = true
 }
 
@@ -709,12 +718,14 @@ const getFilePreviewUrl = (filePath) => {
     return filePath
   }
   // 否则拼接base URL
-  return `http://localhost:9998${filePath}`
+  return previewFileData.previewUrl
 }
 
 const handlePreviewDialogClose = () => {
   previewFileData.fileName = ''
   previewFileData.filePath = ''
+  if (previewFileData.previewUrl) URL.revokeObjectURL(previewFileData.previewUrl)
+  previewFileData.previewUrl = ''
 }
 </script>
 

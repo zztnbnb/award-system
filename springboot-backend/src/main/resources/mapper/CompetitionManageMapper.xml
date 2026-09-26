@@ -9,6 +9,12 @@
         <id property="competitionId" column="competition_id"/>
         <result property="competitionName" column="competition_name"/>
         <result property="awardRank" column="award_rank"/>
+        <result property="competitionType" column="competition_type"/>
+        <result property="minTeamSize" column="min_team_size"/>
+        <result property="maxTeamSize" column="max_team_size"/>
+        <result property="teamOpenTime" column="team_open_time"/>
+        <result property="teamCloseTime" column="team_close_time"/>
+        <result property="teamEnabled" column="team_enabled"/>
     </resultMap>
 
     <!-- 查询竞赛总数 -->
@@ -35,7 +41,7 @@
         SELECT 
             competition_id,
             competition_name,
-            award_rank
+            award_rank, competition_type, min_team_size, max_team_size, team_open_time, team_close_time, team_enabled
         FROM competition
         <where>
             <if test="competitionName != null and competitionName != ''">
@@ -62,7 +68,7 @@
         SELECT 
             competition_id,
             competition_name,
-            award_rank
+            award_rank, competition_type, min_team_size, max_team_size, team_open_time, team_close_time, team_enabled
         FROM competition
         WHERE competition_id = #{competitionId}
     </select>
@@ -71,11 +77,11 @@
     <insert id="insertCompetition" parameterType="com.example.entity.Competition"
             useGeneratedKeys="true" keyProperty="competitionId">
         INSERT INTO competition (
-            competition_name,
-            award_rank
+            competition_name, award_rank, competition_type, min_team_size, max_team_size,
+            team_open_time, team_close_time, team_enabled
         ) VALUES (
-            #{competitionName},
-            #{awardRank}
+            #{competitionName}, #{awardRank}, #{competitionType}, #{minTeamSize}, #{maxTeamSize},
+            #{teamOpenTime}, #{teamCloseTime}, #{teamEnabled}
         )
     </insert>
 
@@ -83,7 +89,13 @@
     <update id="updateCompetition" parameterType="com.example.entity.Competition">
         UPDATE competition
         SET competition_name = #{competitionName},
-            award_rank = #{awardRank}
+            award_rank = #{awardRank},
+            competition_type = #{competitionType},
+            min_team_size = #{minTeamSize},
+            max_team_size = #{maxTeamSize},
+            team_open_time = #{teamOpenTime},
+            team_close_time = #{teamCloseTime},
+            team_enabled = #{teamEnabled}
         WHERE competition_id = #{competitionId}
     </update>
 
@@ -107,7 +119,7 @@
         SELECT 
             competition_id,
             competition_name,
-            award_rank
+            award_rank, competition_type, min_team_size, max_team_size, team_open_time, team_close_time, team_enabled
         FROM competition
         <where>
             <if test="competitionName != null and competitionName != ''">

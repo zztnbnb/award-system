@@ -2,7 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 const request = axios.create({
-  baseURL: 'http://10.152.224.138:9998',
+  baseURL: 'http://localhost:9998',
   timeout: 30000
 })
 
@@ -12,6 +12,8 @@ const request = axios.create({
  * 功能：设置请求头、添加认证信息等
  */
 request.interceptors.request.use(config => {
+  const token = localStorage.getItem('saims_token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
   // 只在未设置Content-Type时才设置为JSON格式
   // 避免覆盖multipart/form-data等其他类型
   if (!config.headers['Content-Type']) {
@@ -32,6 +34,11 @@ request.interceptors.response.use(
     return res
   },
   error => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('saims_token')
+      localStorage.removeItem('saims_user')
+      if (window.location.pathname !== '/login') window.location.href = '/login'
+    }
     if (error.response && error.response.status === 404) {
       ElMessage.error('未找到请求接口')
     } else if (error.response && error.response.status === 500) {

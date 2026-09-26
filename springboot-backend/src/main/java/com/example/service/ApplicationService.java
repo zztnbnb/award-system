@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.example.team.TeamService;
 
 /**
  * 申请业务逻辑层
@@ -34,6 +35,9 @@ public class ApplicationService {
      */
     @Resource
     ApplicationMapper applicationMapper;
+
+    @Resource
+    TeamService teamService;
 
     // 从配置文件读取文件上传路径
     @Value("${file.upload.path}")
@@ -56,12 +60,20 @@ public class ApplicationService {
             throw new Exception("请选择竞赛");
         }
 
+        Map<String, Object> selectedTeam = null;
+        if (Boolean.TRUE.equals(dto.getIsTeam()) && dto.getTeamId() != null) {
+            selectedTeam = teamService.lockedTeamForApplication(dto.getTeamId());
+            if (!java.util.Objects.equals(selectedTeam.get("competitionId"), competitionId)) {
+                throw new Exception("所选队伍与竞赛不匹配");
+            }
+        }
+
         // 2. 创建申请对象
         AwardApplication application = new AwardApplication();
         application.setCompetitionId(competitionId);
         application.setStudentId(studentId);
         application.setProjectName(dto.getProjectName());
-        application.setTeamName(dto.getTeamName());
+        application.setTeamName(selectedTeam != null ? String.valueOf(selectedTeam.get("name")) : dto.getTeamName());
         application.setCompetitionLevel(dto.getCompetitionLevel());
         application.setAwardRank(dto.getAwardLevel()); // 获奖等次（A/B/C/D）
         application.setAwardLevel(dto.getAwardRank()); // 获奖等级（金奖/一等奖等）
@@ -74,7 +86,10 @@ public class ApplicationService {
         application.setContact(dto.getContact());
 
         // 设置获奖数量和获奖人数（个人赛默认为1，团体赛根据团队成员数量设置）
-        if (dto.getIsTeam() && dto.getTeamMembers() != null) {
+        if (selectedTeam != null) {
+            application.setAwardQuantity(1);
+            application.setAwardPersonCount(((List<?>) selectedTeam.get("members")).size());
+        } else if (Boolean.TRUE.equals(dto.getIsTeam()) && dto.getTeamMembers() != null) {
             application.setAwardQuantity(1); // 获奖数量默认为1
             application.setAwardPersonCount(dto.getTeamMembers().size()); // 获奖人数为团队成员数
         } else {
@@ -85,7 +100,7 @@ public class ApplicationService {
         // 指导老师信息已移至 application_teacher 表，此处不再设置
 
         // 设置团队ID（如果是团体赛，需要先创建团队记录，这里暂时设为null）
-        application.setTeamId(null);
+        application.setTeamId(selectedTeam != null ? dto.getTeamId() : null);
 
         // 设置申请状态和时间
         application.setApplicationStatus("pending");
@@ -133,7 +148,7 @@ public class ApplicationService {
         }
 
         // 6. 保存团队成员（如果是团体赛）
-        if (dto.getIsTeam() && dto.getTeamMembers() != null && !dto.getTeamMembers().isEmpty()) {
+        if (selectedTeam == null && Boolean.TRUE.equals(dto.getIsTeam()) && dto.getTeamMembers() != null && !dto.getTeamMembers().isEmpty()) {
             System.out.println("开始保存 " + dto.getTeamMembers().size() + " 位团队成员");
 
             // 先创建团队记录

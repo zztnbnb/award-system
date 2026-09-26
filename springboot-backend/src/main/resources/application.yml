@@ -9,9 +9,9 @@ spring:
     # MySQL 驱动类全路径
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 数据库登录用户名
-    username: root
+    username: ${SAIMS_DB_USERNAME}
     # 密码
-    password: zzt060201
+    password: ${SAIMS_DB_PASSWORD}
     # 数据库连接 URL：指定数据库地址、端口、目标库名及连接参数
     url: jdbc:mysql://localhost:3306/awardsystem?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2b8&allowPublicKeyRetrieval=true
   servlet:
@@ -37,3 +37,7 @@ file:
     # 使用 ${user.dir} 自动获取项目运行目录，适配任何电脑
     # 文件会保存到：项目目录/uploads/applications/
     path: ${user.dir}/uploads/applications/
+
+auth:
+  jwt-secret: ${SAIMS_JWT_SECRET}
+  token-hours: 8

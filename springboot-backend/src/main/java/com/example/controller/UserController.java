@@ -3,8 +3,12 @@ package com.example.controller;
 import com.example.common.Result;
 import com.example.entity.User;
 import com.example.service.UserService;
+import com.example.auth.AuthContext;
+import com.example.auth.JwtService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 /**
  * 用户控制器
  * 处理与用户相关的所有HTTP请求，包括登录、修改密码等功能
@@ -20,6 +24,9 @@ public class UserController {
     @Resource
     UserService userService;
 
+    @Resource
+    JwtService jwtService;
+
     /**
      * 用户登录接口
      * 处理POST请求，验证用户凭据并返回登录结果
@@ -29,7 +36,12 @@ public class UserController {
     @PostMapping("/login")
     public Result login(@RequestBody User user) {
         User dbUser = userService.login(user);
-        return Result.success(dbUser);
+        String token = jwtService.issue(dbUser);
+        dbUser.setPassword(null);
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("token", token);
+        payload.put("user", dbUser);
+        return Result.success(payload);
     }
 
     /**
@@ -41,8 +53,7 @@ public class UserController {
     @PostMapping("/changePassword")
     public Result changePassword(@RequestBody java.util.Map<String, String> request) {
         try {
-            System.out.println("收到修改密码请求: " + request);
-            String username = request.get("username");
+            String username = AuthContext.require().username();
             String oldPassword = request.get("oldPassword");
             String newPassword = request.get("newPassword");
             

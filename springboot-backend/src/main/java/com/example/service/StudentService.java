@@ -2,11 +2,13 @@ package com.example.service;
 
 import com.example.entity.Student;
 import com.example.mapper.StudentMapper;
+import com.example.mapper.UserMapper;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,6 +23,11 @@ public class StudentService {
 
     @Autowired
     private StudentMapper studentMapper;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     /**
      * 获取学生统计信息
@@ -259,8 +266,10 @@ public class StudentService {
             String newPassword = "SY" + studentNumber;
 
             // 更新密码
-            int result = studentMapper.updatePassword(studentId, newPassword);
-            return result > 0;
+            Student student = studentMapper.selectStudentById(studentId);
+            if (student == null || !studentNumber.equals(student.getStudentNumber())) return false;
+            userMapper.updatePasswordByUsername(studentNumber, passwordEncoder.encode(newPassword));
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;

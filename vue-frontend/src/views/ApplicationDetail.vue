@@ -148,6 +148,7 @@ import { ElMessage } from 'element-plus'
 import { Back, Document, Download } from '@element-plus/icons-vue'
 import NavBar from '../components/NavBar.vue'
 import request from '../utils/request'
+import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
@@ -220,8 +221,18 @@ const formatFileSize = (bytes) => {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
 }
 
-const downloadFile = (file) => {
-  window.open(file.filePath, '_blank')
+const downloadFile = async (file) => {
+  try {
+    const response = await axios.get(`http://localhost:9998${file.filePath}`, { responseType: 'blob' })
+    const url = URL.createObjectURL(response.data)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.fileName || '附件'
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    ElMessage.error('附件下载失败')
+  }
 }
 
 const goBack = () => {

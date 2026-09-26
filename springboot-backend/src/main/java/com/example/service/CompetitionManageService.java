@@ -79,6 +79,7 @@ public class CompetitionManageService {
             throw new Exception("获奖等次不能为空");
         }
 
+        normalizeTeamRules(competition);
         competitionManageMapper.insertCompetition(competition);
     }
 
@@ -96,6 +97,7 @@ public class CompetitionManageService {
             throw new Exception("获奖等次不能为空");
         }
 
+        normalizeTeamRules(competition);
         competitionManageMapper.updateCompetition(competition);
     }
 
@@ -245,6 +247,20 @@ public class CompetitionManageService {
                 return cell.getCellFormula();
             default:
                 return "";
+        }
+    }
+
+    private void normalizeTeamRules(Competition competition) throws Exception {
+        if (competition.getCompetitionType() == null) competition.setCompetitionType("团体赛");
+        if (competition.getMinTeamSize() == null) competition.setMinTeamSize(1);
+        if (competition.getMaxTeamSize() == null) competition.setMaxTeamSize(10);
+        if (competition.getTeamEnabled() == null) competition.setTeamEnabled(1);
+        if (competition.getMinTeamSize() < 1 || competition.getMaxTeamSize() < competition.getMinTeamSize()) {
+            throw new Exception("组队人数范围无效");
+        }
+        if (competition.getTeamOpenTime() != null && competition.getTeamCloseTime() != null
+                && !competition.getTeamOpenTime().isBefore(competition.getTeamCloseTime())) {
+            throw new Exception("组队截止时间必须晚于开放时间");
         }
     }
 }

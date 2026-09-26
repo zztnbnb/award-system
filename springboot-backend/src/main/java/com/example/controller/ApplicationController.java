@@ -11,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import com.example.auth.AuthContext;
+import com.example.auth.AuthUser;
 
 /**
  * 申请管理控制器
@@ -73,10 +75,11 @@ public class ApplicationController {
     public Result submitApplication(
             @RequestParam("data") String data,
             @RequestParam(value = "files", required = false) MultipartFile[] files,
-            @RequestParam("studentId") Integer studentId) {
+            @RequestParam(value = "studentId", required = false) Integer ignoredStudentId) {
         
         try {
             System.out.println("========== 收到申请提交请求 ==========");
+            Integer studentId = AuthContext.require().studentId();
             System.out.println("学生ID: " + studentId);
             System.out.println("数据: " + data);
             System.out.println("文件数量: " + (files != null ? files.length : 0));
@@ -120,6 +123,7 @@ public class ApplicationController {
     @GetMapping("/application/list")
     public Result getApplicationsByStudentId(@RequestParam Integer studentId) {
         try {
+            requireApplicationOwnerOrReviewer(studentId);
             return Result.success(applicationService.getApplicationsByStudentId(studentId));
         } catch (Exception e) {
             System.err.println("查询申请列表失败: " + e.getMessage());
@@ -136,7 +140,9 @@ public class ApplicationController {
     @GetMapping("/application/detail")
     public Result getApplicationDetail(@RequestParam Integer applicationId) {
         try {
-            return Result.success(applicationService.getApplicationDetail(applicationId));
+            Map<String, Object> detail = applicationService.getApplicationDetail(applicationId);
+            requireApplicationOwnerOrReviewer((Integer) detail.get("studentId"));
+            return Result.success(detail);
         } catch (Exception e) {
             System.err.println("查询申请详情失败: " + e.getMessage());
             e.printStackTrace();
@@ -189,6 +195,7 @@ public class ApplicationController {
     @GetMapping("/application/record/list")
     public Result getApplicationRecordList(@RequestParam Integer studentId) {
         try {
+            requireApplicationOwnerOrReviewer(studentId);
             List<java.util.Map<String, Object>> applications = applicationService.getApplicationsByStudentId(studentId);
             return Result.success(applications);
         } catch (Exception e) {
@@ -204,7 +211,9 @@ public class ApplicationController {
     @GetMapping("/application/record/detail/{applicationId}")
     public Result getApplicationRecordDetail(@PathVariable Integer applicationId) {
         try {
-            return Result.success(applicationService.getApplicationDetail(applicationId));
+            Map<String, Object> detail = applicationService.getApplicationDetail(applicationId);
+            requireApplicationOwnerOrReviewer((Integer) detail.get("studentId"));
+            return Result.success(detail);
         } catch (Exception e) {
             return Result.error("查询申请详情失败: " + e.getMessage());
         }
@@ -219,7 +228,7 @@ public class ApplicationController {
     public Result withdrawApplication(@RequestBody java.util.Map<String, Integer> request) {
         try {
             Integer applicationId = request.get("applicationId");
-            Integer studentId = request.get("studentId");
+            Integer studentId = AuthContext.require().studentId();
             
             if (applicationId == null || studentId == null) {
                 return Result.error("参数不完整");
@@ -229,6 +238,14 @@ public class ApplicationController {
             return Result.success("申请已撤回");
         } catch (Exception e) {
             return Result.error(e.getMessage());
+        }
+    }
+
+    private void requireApplicationOwnerOrReviewer(Integer applicationStudentId) {
+        AuthUser user = AuthContext.require();
+        if (user.hasRole("admin") || user.hasRole("mentor")) return;
+        if (applicationStudentId == null || !applicationStudentId.equals(user.studentId())) {
+            throw new SecurityException("无权访问其他学生的申请");
         }
     }
 }

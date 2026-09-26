@@ -342,7 +342,7 @@ import { Plus, Delete, Edit, Search, Upload, Download, Refresh } from '@element-
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
 
-const API_BASE_URL = 'http://10.152.224.138:9998/api/student'
+const API_BASE_URL = 'http://localhost:9998/api/student'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -1677,7 +1677,7 @@ const handleResetPasswordDialogClose = () => {
   }
 
 }
-
+</style>
 
 <style>
 /* ====== 全局或弹出层日历美化 (强视觉冲击版) ====== */

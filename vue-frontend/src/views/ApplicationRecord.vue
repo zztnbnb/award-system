@@ -295,6 +295,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, View, Delete, Search, Document, Timer, CircleCheck, CircleClose, RefreshLeft } from '@element-plus/icons-vue'
 import NavBar from '../components/NavBar.vue'
 import request from '../utils/request'
+import axios from 'axios'
 
 const router = useRouter()
 const loading = ref(false)
@@ -309,7 +310,8 @@ const currentDetail = ref({})
 
 const previewFileData = reactive({
   fileName: '',
-  filePath: ''
+  filePath: '',
+  previewUrl: ''
 })
 
 // 获取用户信息
@@ -524,9 +526,17 @@ const isPreviewImage = computed(() => {
   return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext);
 });
 
-const handlePreviewFile = (file) => {
+const handlePreviewFile = async (file) => {
   previewFileData.fileName = file.fileName
   previewFileData.filePath = file.filePath
+  if (previewFileData.previewUrl) URL.revokeObjectURL(previewFileData.previewUrl)
+  try {
+    const response = await axios.get(`http://localhost:9998${file.filePath}`, { responseType: 'blob' })
+    previewFileData.previewUrl = URL.createObjectURL(response.data)
+  } catch (error) {
+    ElMessage.error('附件加载失败')
+    return
+  }
   previewDialogVisible.value = true
 }
 
@@ -537,12 +547,14 @@ const getFilePreviewUrl = (filePath) => {
     return filePath
   }
   // 否则拼接base URL
-  return `http://localhost:9998${filePath}`
+  return previewFileData.previewUrl
 }
 
 const handlePreviewDialogClose = () => {
   previewFileData.fileName = ''
   previewFileData.filePath = ''
+  if (previewFileData.previewUrl) URL.revokeObjectURL(previewFileData.previewUrl)
+  previewFileData.previewUrl = ''
 }
 </script>
 

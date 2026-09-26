@@ -23,22 +23,33 @@
           <el-menu-item index="/student/record" v-if="hasRole('student')">
             <span>申请记录</span>
           </el-menu-item>
-          <el-menu-item index="/admin/review" v-if="hasRole('admin') || hasRole('mentor')">
-            <span>审核管理</span>
+          <el-menu-item index="/student/teams" v-if="hasRole('student')">
+            <span>竞赛组队</span>
           </el-menu-item>
-          <el-menu-item index="/admin/statistics" v-if="hasRole('admin') || hasRole('mentor')">
-            <span>数据统计</span>
-          </el-menu-item>
-          <el-menu-item index="/admin/competition" v-if="hasRole('admin') || hasRole('mentor')">
-            <span>竞赛管理</span>
-          </el-menu-item>
-          <el-menu-item index="/admin/student" v-if="hasRole('admin') || hasRole('mentor')">
-            <span>学生管理</span>
-          </el-menu-item>
+          <el-sub-menu
+            v-if="hasRole('admin') || hasRole('mentor')"
+            index="admin-center"
+            popper-class="admin-nav-submenu"
+          >
+            <template #title>
+              <span>管理中心</span>
+              <el-icon class="admin-menu-arrow"><ArrowDown /></el-icon>
+            </template>
+            <el-menu-item index="/admin/review">审核管理</el-menu-item>
+            <el-menu-item index="/admin/statistics">数据统计</el-menu-item>
+            <el-menu-item index="/admin/competition">竞赛管理</el-menu-item>
+            <el-menu-item index="/admin/student">学生管理</el-menu-item>
+            <el-menu-item index="/admin/teams" v-if="hasRole('admin')">组队治理</el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </div>
       
       <div class="navbar-right">
+        <el-badge :value="unreadCount" :hidden="!unreadCount" :max="99" class="notification-badge">
+          <el-button circle text title="通知中心" @click="router.push('/notifications')">
+            <el-icon><Bell /></el-icon>
+          </el-button>
+        </el-badge>
         <el-dropdown @command="handleCommand" class="premium-dropdown-trigger">
           <span class="user-dropdown">
             <div class="user-avatar" :style="{ background: userAvatarBg }">
@@ -134,6 +145,9 @@
             <span class="mobile-menu-text">申请记录</span>
           </div>
         </el-menu-item>
+        <el-menu-item index="/student/teams" v-if="hasRole('student')">
+          <div class="mobile-menu-inner"><span class="mobile-menu-text">竞赛组队</span></div>
+        </el-menu-item>
         <el-menu-item index="/admin/review" v-if="hasRole('admin') || hasRole('mentor')">
           <div class="mobile-menu-inner">
             <span class="mobile-menu-text">审核管理</span>
@@ -154,6 +168,9 @@
             <span class="mobile-menu-text">学生管理</span>
           </div>
         </el-menu-item>
+        <el-menu-item index="/admin/teams" v-if="hasRole('admin')">
+          <div class="mobile-menu-inner"><span class="mobile-menu-text">组队治理</span></div>
+        </el-menu-item>
       </el-menu>
     </el-drawer>
   </div>
@@ -164,7 +181,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../utils/request'
-import { Trophy, User, ArrowDown, Lock, SwitchButton, Expand } from '@element-plus/icons-vue'
+import { Trophy, User, ArrowDown, Lock, SwitchButton, Expand, Bell } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -174,6 +191,7 @@ const activeMenu = ref('')
 const passwordDialogVisible = ref(false)
 const passwordFormRef = ref(null)
 const drawerVisible = ref(false)
+const unreadCount = ref(0)
 
 const handleMobileMenuSelect = (index) => {
   drawerVisible.value = false
@@ -235,10 +253,14 @@ const passwordRules = {
   ]
 }
 
-onMounted(() => {
+onMounted(async () => {
   const user = localStorage.getItem('saims_user')
   userInfo.value = user ? JSON.parse(user) : null
   activeMenu.value = route.path
+  try {
+    const res = await request.get('/api/notifications/unread-count')
+    if (res.code === '200') unreadCount.value = Number(res.data || 0)
+  } catch (_) {}
 })
 
 const hasRole = (role) => {
@@ -283,6 +305,7 @@ const handleLogout = async () => {
     
     await request.post('/user/logout')
     localStorage.removeItem('saims_user')
+    localStorage.removeItem('saims_token')
     ElMessage.success('已退出登录')
     router.push('/login')
   } catch (error) {
@@ -307,6 +330,7 @@ const handleChangePassword = async () => {
         
         setTimeout(() => {
           localStorage.removeItem('saims_user')
+          localStorage.removeItem('saims_token')
           router.push('/login')
         }, 1500)
       } catch (error) {
@@ -401,6 +425,7 @@ const handleChangePassword = async () => {
 
 .navbar-center {
   flex: 1;
+  min-width: 0;
   display: flex;
   justify-content: center;
   padding: 0 40px;
@@ -408,9 +433,31 @@ const handleChangePassword = async () => {
 
 .navbar-right {
   flex-shrink: 0;
+  min-width: max-content;
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+:deep(.navbar-center .el-sub-menu__icon-arrow) {
+  display: none;
+}
+
+.admin-menu-arrow {
+  position: static;
+  margin-left: 8px;
+  font-size: 13px;
+  color: #94a3b8;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+:deep(.el-sub-menu:hover) .admin-menu-arrow,
+:deep(.el-sub-menu.is-active) .admin-menu-arrow {
+  color: #4f46e5;
+}
+
+:deep(.el-sub-menu.is-opened) .admin-menu-arrow {
+  transform: rotate(180deg);
 }
 
 .mobile-menu-btn {
@@ -620,6 +667,10 @@ const handleChangePassword = async () => {
   font-weight: 600;
   color: #1e293b;
   letter-spacing: 0.2px;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dropdown-arrow {
@@ -661,7 +712,8 @@ const handleChangePassword = async () => {
   height: 100%;
 }
 
-:deep(.el-menu-item) {
+:deep(.el-menu-item),
+:deep(.el-sub-menu__title) {
   height: 90px !important; /* 跟随您设置的全新 90px 导航高度对齐 */
   line-height: 90px !important;
   padding: 0 24px !important;
@@ -674,19 +726,22 @@ const handleChangePassword = async () => {
   transition: color 0.3s ease !important;
 }
 
-:deep(.el-menu-item:hover) {
+:deep(.el-menu-item:hover),
+:deep(.el-sub-menu__title:hover) {
   color: #0f172a !important;
   background: transparent !important;
 }
 
-:deep(.el-menu-item.is-active) {
+:deep(.el-menu-item.is-active),
+:deep(.el-sub-menu.is-active > .el-sub-menu__title) {
   color: #4f46e5 !important;
   font-weight: 600 !important;
   background: transparent !important;
 }
 
 /* 丝滑中心扩散发光下划线 */
-:deep(.el-menu-item::after) {
+:deep(.el-menu-item::after),
+:deep(.el-sub-menu__title::after) {
   content: '';
   position: absolute;
   bottom: 24px; /* 适应 90px 超宽高度完美底距 */
@@ -702,19 +757,61 @@ const handleChangePassword = async () => {
   box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.5);
 }
 
-:deep(.el-menu-item:hover::after) {
+:deep(.el-menu-item:hover::after),
+:deep(.el-sub-menu__title:hover::after) {
   transform: translateX(-50%) scaleX(0.6);
   opacity: 0.5;
 }
 
-:deep(.el-menu-item.is-active::after) {
+:deep(.el-menu-item.is-active::after),
+:deep(.el-sub-menu.is-active > .el-sub-menu__title::after) {
   transform: translateX(-50%) scaleX(1);
   opacity: 1;
+}
+
+@media screen and (max-width: 1100px) and (min-width: 769px) {
+  .navbar-container { padding: 0 20px; }
+  .navbar-center { padding: 0 16px; }
+  .logo-text { display: none; }
+  :deep(.el-menu-item), :deep(.el-sub-menu__title) { padding: 0 16px !important; }
 }
 
 </style>
 
 <style>
+/* 管理入口收纳菜单，与顶部导航的玻璃态视觉保持一致 */
+.admin-nav-submenu.el-popper {
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 14px 32px -10px rgba(15, 23, 42, 0.2) !important;
+  overflow: hidden;
+}
+.admin-nav-submenu .el-menu {
+  min-width: 156px !important;
+  padding: 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.admin-nav-submenu .el-menu-item {
+  height: 42px !important;
+  line-height: 42px !important;
+  margin: 2px 0 !important;
+  padding: 0 16px !important;
+  border-radius: 9px !important;
+  color: #475569 !important;
+  font-size: 14px !important;
+}
+.admin-nav-submenu .el-menu-item:hover {
+  color: #4f46e5 !important;
+  background: #eef2ff !important;
+}
+.admin-nav-submenu .el-menu-item.is-active {
+  color: #4f46e5 !important;
+  font-weight: 600 !important;
+  background: #eef2ff !important;
+}
+
 /* 下拉菜单全局高级样式 */
 .el-dropdown__popper.el-popper {
   border: none !important;

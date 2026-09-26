@@ -91,6 +91,13 @@
                 show-word-limit
               />
             </el-form-item>
+
+            <el-form-item label="已锁定队伍" v-if="applicationType === 'team'">
+              <el-select v-model="formData.teamId" placeholder="可选择组队板块中已锁定的队伍" clearable style="width:100%" @change="applyLockedTeam">
+                <el-option v-for="team in lockedTeams" :key="team.teamId" :label="`${team.teamName} · ${team.competitionName}`" :value="team.teamId" />
+              </el-select>
+              <div class="locked-team-tip">选择后将自动带入竞赛、队伍名称与正式成员；不选择时仍可手工填写。</div>
+            </el-form-item>
             
             <el-row :gutter="20">
               <el-col :xs="24" :sm="12">
@@ -205,7 +212,7 @@
           </div>
           
           <!-- 团队成员信息 (仅团体赛) -->
-          <div class="form-section" v-if="applicationType === 'team'">
+          <div class="form-section" v-if="applicationType === 'team' && !formData.teamId">
             <h3 class="section-title">
               <span class="title-with-icon">
                 <el-icon class="title-icon"><User /></el-icon>
@@ -644,6 +651,7 @@ const fileList = computed(() => {
   return applicationType.value === 'individual' ? individualFileList.value : teamFileList.value
 })
 const searchLoading = ref(false)
+const lockedTeams = ref([])
 
 // 文件预览相关
 const previewDialogVisible = ref(false)
@@ -790,6 +798,7 @@ const individualFormData = reactive({
 })
 
 const teamFormData = reactive({
+  teamId: null,
   competitionId: null,       // 竞赛ID
   competitionName: '',       // 竞赛名称（用于显示）
   projectName: '',
@@ -843,10 +852,7 @@ const allCompetitions = ref([])
 const loadAllCompetitions = async () => {
   searchLoading.value = true
   try {
-    // 使用带 /api 的标准接口以确保不会在特定环境下跨域或被重定向到静态HTML (这里把pageSize调大，一次性查全)
-    const res = await request.get('/api/competition-manage/list', {
-      params: { pageSize: 1500 }
-    })
+    const res = await request.get('/competition/all')
     
     // 该接口返回格式通常是 { code: "200", data: { list: [...], total: ... } } 或直接是 data 对象
     let targetArray = []
@@ -872,7 +878,35 @@ const loadAllCompetitions = async () => {
 // 页面加载时自动获取全量竞赛数据
 onMounted(() => {
   loadAllCompetitions()
+  request.get('/api/teams/locked').then(res => {
+    if (res.code === '200') lockedTeams.value = res.data || []
+  }).catch(() => {})
 })
+
+const applyLockedTeam = async (teamId) => {
+  if (!teamId) {
+    teamFormData.teamMembers = []
+    return
+  }
+  const selected = lockedTeams.value.find(item => item.teamId === teamId)
+  const res = await request.get(`/api/teams/${teamId}`)
+  if (res.code !== '200') return ElMessage.error(res.msg)
+  const team = res.data
+  teamFormData.competitionId = team.competitionId
+  teamFormData.competitionName = team.competitionName
+  teamFormData.awardRank = selected?.awardRank || ''
+  teamFormData.teamName = team.name
+  teamFormData.teamMembers = (team.members || []).map((member, index) => ({
+    isExternal: false,
+    studentName: member.studentName,
+    studentNumber: member.studentNumber,
+    studentDepartment: member.college,
+    isLeader: Boolean(member.isLeader),
+    sortOrder: index + 1
+  }))
+  teamFormData.confirmMemberOrder = true
+  ElMessage.success('已带入锁定队伍信息')
+}
 
 // ==================== 赛事下拉框搜索与推荐逻辑 ====================
 const currentSearchKeyword = ref('')
@@ -1186,17 +1220,17 @@ const handleSubmit = async () => {
     
     // 团体赛必须至少有两名团队成员
     if (applicationType.value === 'team') {
-      if (!formData.value.teamMembers || formData.value.teamMembers.length === 0) {
+      if (!formData.value.teamId && (!formData.value.teamMembers || formData.value.teamMembers.length === 0)) {
         ElMessage.warning('团体赛请至少添加两名团队成员')
         return
       }
-      if (formData.value.teamMembers.length < 2) {
+      if (!formData.value.teamId && formData.value.teamMembers.length < 2) {
         ElMessage.warning('团体赛至少需要两名团队成员')
         return
       }
       
       // 检查是否有队长
-      const hasLeader = formData.value.teamMembers.some(m => m.isLeader)
+      const hasLeader = formData.value.teamId || formData.value.teamMembers.some(m => m.isLeader)
       if (!hasLeader) {
         ElMessage.warning('请指定一名队长')
         return
@@ -1204,7 +1238,7 @@ const handleSubmit = async () => {
     }
     
     // 团体赛需要确认排序选项
-    if (applicationType.value === 'team' && formData.value.teamMembers && formData.value.teamMembers.length > 0) {
+    if (applicationType.value === 'team' && !formData.value.teamId && formData.value.teamMembers && formData.value.teamMembers.length > 0) {
       const sortMessage = formData.value.confirmMemberOrder 
         ? '您已选择"组内有排序，序号对应成员排序"，请确认成员添加顺序是否正确？' 
         : '您已选择"组内无排序"，确认组内成员无先后顺序？'
@@ -1302,6 +1336,7 @@ const handleReset = () => {
   } else {
     // 重置团体赛数据
     teamFormData.competitionId = null
+    teamFormData.teamId = null
     teamFormData.competitionName = ''
     teamFormData.projectName = ''
     teamFormData.teamName = ''
@@ -2303,6 +2338,8 @@ const handleReset = () => {
     padding: 10px 0 !important;
   }
 }
+
+</style>
 
 /* ================= Custom Competition Selector Dialog ================= */
 <style>

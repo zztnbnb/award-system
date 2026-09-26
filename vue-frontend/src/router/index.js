@@ -23,6 +23,18 @@ const routes = [
     meta: { requiresAuth: true, roles: ['student', 'admin'] }
   },
   {
+    path: '/student/teams',
+    name: 'TeamHub',
+    component: () => import('../views/TeamHub.vue'),
+    meta: { requiresAuth: true, roles: ['student'] }
+  },
+  {
+    path: '/notifications',
+    name: 'Notifications',
+    component: () => import('../views/NotificationCenter.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/student/application/detail/:id',
     name: 'ApplicationDetail',
     component: () => import('../views/ApplicationDetail.vue'),
@@ -52,6 +64,12 @@ const routes = [
     component: () => import('../views/Student.vue'),
     meta: { requiresAuth: true, roles: ['admin', 'mentor'] }
   }
+  ,{
+    path: '/admin/teams',
+    name: 'AdminTeams',
+    component: () => import('../views/AdminTeams.vue'),
+    meta: { requiresAuth: true, roles: ['admin'] }
+  }
 ]
 
 const router = createRouter({
@@ -63,13 +81,18 @@ router.beforeEach((to, from, next) => {
   // 从 localStorage 获取用户信息
   const userInfo = localStorage.getItem('saims_user')
   
+  const token = localStorage.getItem('saims_token')
   if (to.path === '/login') {
     next()
   } else {
-    if (!userInfo) {
+    if (!userInfo || !token) {
       next('/login')
     } else {
-      next()
+      const user = JSON.parse(userInfo)
+      const roles = String(user.role || '').split(',').map(v => v.trim())
+      const allowed = !to.meta.roles || to.meta.roles.some(role => roles.includes(role))
+      if (allowed) next()
+      else next('/student/award')
     }
   }
 })

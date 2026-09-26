@@ -1,5 +1,6 @@
 package com.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 /**
@@ -9,7 +10,8 @@ import java.time.LocalDateTime;
 public class User {
     private Integer userId;              // 用户ID（主键）
     private String username;             // 登录账号（唯一）
-    private String password;             // 明文密码
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;             // 登录凭据，不参与响应序列化
     private String role;                 // 用户角色（student, mentor, admin）
     private Integer studentId;           // 关联学生表ID
     private Integer mentorId;            // 关联导师表ID

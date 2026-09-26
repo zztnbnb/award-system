@@ -95,13 +95,13 @@ const handleLogin = () => {
       loading.value = true
       request.post("/user/login", loginForm.value).then(res => {
         if (res.code === '200') {
-          // 保存用户信息到 localStorage
-          localStorage.setItem("saims_user", JSON.stringify(res.data || {}))
+          localStorage.setItem("saims_token", res.data.token)
+          localStorage.setItem("saims_user", JSON.stringify(res.data.user || {}))
           
           ElMessage.success('登录成功')
           
           // 根据角色跳转
-          const role = res.data.role
+          const role = res.data.user?.role
           if (role && role.includes('mentor')) {
             // 导师跳转到审核页面
             router.push('/admin/review')

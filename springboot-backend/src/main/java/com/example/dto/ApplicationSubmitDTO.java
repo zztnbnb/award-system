@@ -7,6 +7,7 @@ import java.util.List;
  */
 public class ApplicationSubmitDTO {
     private Integer competitionId;       // 竞赛ID
+    private Integer teamId;              // 已锁定的赛前组队ID（可选）
     private String projectName;          // 项目名称
     private String teamName;             // 团队名称（个人赛为空）
     private String competitionLevel;     // 竞赛级别
@@ -27,6 +28,9 @@ public class ApplicationSubmitDTO {
     public void setCompetitionId(Integer competitionId) {
         this.competitionId = competitionId;
     }
+
+    public Integer getTeamId() { return teamId; }
+    public void setTeamId(Integer teamId) { this.teamId = teamId; }
 
     public String getProjectName() {
         return projectName;

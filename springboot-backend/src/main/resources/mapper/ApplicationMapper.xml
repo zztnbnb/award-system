@@ -17,6 +17,12 @@
         <result property="contact" column="contact"/>
         <result property="competitionLevel" column="competition_level"/>
         <result property="awardRank" column="award_rank"/>
+        <result property="competitionType" column="competition_type"/>
+        <result property="minTeamSize" column="min_team_size"/>
+        <result property="maxTeamSize" column="max_team_size"/>
+        <result property="teamOpenTime" column="team_open_time"/>
+        <result property="teamCloseTime" column="team_close_time"/>
+        <result property="teamEnabled" column="team_enabled"/>
         <result property="awardLevel" column="award_level"/>
         <result property="awardTime" column="award_time"/>
         <result property="applicationStatus" column="application_status"/>
@@ -135,7 +141,7 @@
 
     <!-- 根据关键词搜索竞赛 -->
     <select id="searchCompetitionByName" resultMap="CompetitionResultMap">
-        SELECT competition_id, competition_name, award_rank
+        SELECT competition_id, competition_name, award_rank, competition_type, min_team_size, max_team_size, team_open_time, team_close_time, team_enabled
         FROM competition
         WHERE competition_name LIKE CONCAT('%', #{keyword}, '%')
         ORDER BY competition_name
@@ -143,7 +149,7 @@
 
     <!-- 查询所有竞赛 -->
     <select id="selectAllCompetitions" resultMap="CompetitionResultMap">
-        SELECT competition_id, competition_name, award_rank
+        SELECT competition_id, competition_name, award_rank, competition_type, min_team_size, max_team_size, team_open_time, team_close_time, team_enabled
         FROM competition
         ORDER BY competition_name
     </select>
@@ -157,7 +163,7 @@
 
     <!-- 根据竞赛ID查询竞赛 -->
     <select id="selectCompetitionById" resultMap="CompetitionResultMap">
-        SELECT competition_id, competition_name, award_rank
+        SELECT competition_id, competition_name, award_rank, competition_type, min_team_size, max_team_size, team_open_time, team_close_time, team_enabled
         FROM competition
         WHERE competition_id = #{competitionId}
     </select>
@@ -448,4 +454,3 @@
     </select>
 
 </mapper>
-

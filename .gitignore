@@ -12,6 +12,7 @@
 
 # Log
 *.log
+local-secrets.ps1
 
 # SQL (Exclude internal backups, but keep the specific one if needed)
 # award_system_clean_v2.sql # Keep this for now as user wants to share it

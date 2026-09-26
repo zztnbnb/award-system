@@ -96,6 +96,9 @@
               <el-tag :type="getAwardRankType(row.awardRank)">{{ row.awardRank }}</el-tag>
             </template>
           </el-table-column>
+          <el-table-column label="组队" width="110" align="center">
+            <template #default="{ row }"><el-tag :type="row.teamEnabled ? 'success' : 'info'">{{ row.teamEnabled ? `${row.minTeamSize}-${row.maxTeamSize}人` : '未开放' }}</el-tag></template>
+          </el-table-column>
           <el-table-column label="操作" width="180" align="center" fixed="right">
             <template #default="{ row }">
               <el-button 
@@ -137,7 +140,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="420px"
+      width="min(680px, 94vw)"
       @close="handleDialogClose"
     >
       <el-form
@@ -166,6 +169,11 @@
             <el-option label="D" value="D" />
           </el-select>
         </el-form-item>
+        <el-divider content-position="left">竞赛组队规则</el-divider>
+        <el-form-item label="开放组队"><el-switch v-model="formData.teamEnabled" :active-value="1" :inactive-value="0" /></el-form-item>
+        <el-form-item label="竞赛类型"><el-select v-model="formData.competitionType" style="width:100%"><el-option label="团体赛" value="团体赛" /><el-option label="个人赛" value="个人赛" /></el-select></el-form-item>
+        <el-row :gutter="12"><el-col :span="12"><el-form-item label="最少人数"><el-input-number v-model="formData.minTeamSize" :min="1" :max="50" /></el-form-item></el-col><el-col :span="12"><el-form-item label="最多人数"><el-input-number v-model="formData.maxTeamSize" :min="1" :max="100" /></el-form-item></el-col></el-row>
+        <el-form-item label="组队时间"><el-date-picker v-model="teamTimeRange" type="datetimerange" start-placeholder="开放时间" end-placeholder="截止时间" value-format="YYYY-MM-DDTHH:mm:ss" style="width:100%" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -182,7 +190,7 @@ import { Plus, Delete, Edit, Search, Upload, Download } from '@element-plus/icon
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
 
-const API_BASE_URL = 'http://10.152.224.138:9998/api/competition-manage'
+const API_BASE_URL = 'http://localhost:9998/api/competition-manage'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -212,8 +220,15 @@ const competitionList = ref([])
 const formData = reactive({
   competitionId: null,
   competitionName: '',
-  awardRank: ''
+  awardRank: '',
+  competitionType: '团体赛',
+  minTeamSize: 2,
+  maxTeamSize: 10,
+  teamOpenTime: null,
+  teamCloseTime: null,
+  teamEnabled: 1
 })
+const teamTimeRange = ref([])
 
 const formRules = {
   competitionName: [
@@ -276,6 +291,8 @@ const handleAdd = () => {
   formData.competitionId = null
   formData.competitionName = ''
   formData.awardRank = ''
+  Object.assign(formData, { competitionType: '团体赛', minTeamSize: 2, maxTeamSize: 10, teamOpenTime: null, teamCloseTime: null, teamEnabled: 1 })
+  teamTimeRange.value = []
   dialogVisible.value = true
 }
 
@@ -284,6 +301,8 @@ const handleEdit = (row) => {
   formData.competitionId = row.competitionId
   formData.competitionName = row.competitionName
   formData.awardRank = row.awardRank
+  Object.assign(formData, { competitionType: row.competitionType || '团体赛', minTeamSize: row.minTeamSize || 1, maxTeamSize: row.maxTeamSize || 10, teamOpenTime: row.teamOpenTime || null, teamCloseTime: row.teamCloseTime || null, teamEnabled: row.teamEnabled ?? 1 })
+  teamTimeRange.value = row.teamOpenTime && row.teamCloseTime ? [row.teamOpenTime, row.teamCloseTime] : []
   dialogVisible.value = true
 }
 
@@ -336,6 +355,8 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true
       try {
+        formData.teamOpenTime = teamTimeRange.value?.[0] || null
+        formData.teamCloseTime = teamTimeRange.value?.[1] || null
         if (formData.competitionId) {
           await axios.put(`${API_BASE_URL}/update`, formData)
           ElMessage.success('更新成功')

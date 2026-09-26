@@ -6,15 +6,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.example.team.TeamBusinessException;
 
 /**
  * 全局异常处理器
  * 统一捕获和处理系统中抛出的异常，实现异常处理的集中化管理
  * 避免异常直接抛给前端，提高系统友好性和安全性
  */
-// 指定对com.example.controller包下的控制器生效
-@ControllerAdvice("com.example.controller")
+// 同时处理普通控制器和组队模块控制器的业务错误。
+@ControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(TeamBusinessException.class)
+    @ResponseBody
+    public Result handleTeamBusinessException(TeamBusinessException e) {
+        return Result.error(e.getCode(), e.getMessage());
+    }
 
   // 日志记录器，用于记录异常信息
   private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);

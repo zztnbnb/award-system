@@ -5,6 +5,7 @@ import com.example.exception.CustomerException;
 import com.example.mapper.UserMapper;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 /**
  * 用户业务逻辑层
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class UserService {
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     /**
      * 注入用户Mapper，通过Mapper操作数据库
@@ -34,8 +37,16 @@ public class UserService {
         }
         
         // 验证密码是否正确
-        if (!dbUser.getPassword().equals(user.getPassword())) {
+        boolean encoded = dbUser.getPassword() != null && dbUser.getPassword().startsWith("$2");
+        boolean passwordMatches = encoded
+                ? passwordEncoder.matches(user.getPassword(), dbUser.getPassword())
+                : dbUser.getPassword() != null && dbUser.getPassword().equals(user.getPassword());
+        if (!passwordMatches) {
             throw new CustomerException("账号或密码错误");
+        }
+
+        if (!encoded) {
+            userMapper.updatePasswordByUsername(dbUser.getUsername(), passwordEncoder.encode(user.getPassword()));
         }
         
         // 检查账号状态
@@ -90,7 +101,10 @@ public class UserService {
         }
         
         // 验证旧密码是否正确
-        if (!dbUser.getPassword().equals(oldPassword)) {
+        boolean matches = dbUser.getPassword() != null && dbUser.getPassword().startsWith("$2")
+                ? passwordEncoder.matches(oldPassword, dbUser.getPassword())
+                : dbUser.getPassword() != null && dbUser.getPassword().equals(oldPassword);
+        if (!matches) {
             throw new CustomerException("原密码错误");
         }
         
@@ -100,6 +114,6 @@ public class UserService {
         }
         
         // 更新密码
-        userMapper.updatePasswordByUsername(username, newPassword);
+        userMapper.updatePasswordByUsername(username, passwordEncoder.encode(newPassword));
     }
 }
